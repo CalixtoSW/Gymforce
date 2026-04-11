@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+    "usernameheo.errorlens",
+    "msjsdiag.vscode-react-native",
+    "expo.vscode-expo-tools",
+    "dsznajder.es7-react-js-snippets",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "github.copilot",
+    "eamodio.gitlens",
+    "rangav.vscode-thunder-client",
+    "gruntfuggly.todo-tree",
+    "bradlc.vscode-tailwindcss",
+    "ms-azuretools.vscode-docker"
+  ]
+}
