@@ -6,6 +6,13 @@ from app.schemas.auth import (
     TokenResponse,
 )
 from app.schemas.checkin import CheckinQRPayload, CheckinResponse, QRCodeResponse
+from app.schemas.gamification import (
+    GamificationSummary,
+    LeaderboardEntry,
+    LeaderboardResponse,
+    PointEventResponse,
+    StreakResponse,
+)
 from app.schemas.health import HealthResponse
 from app.schemas.plan import PlanCreate, PlanResponse
 from app.schemas.user import UserAdminUpdate, UserResponse, UserUpdate
@@ -23,6 +30,11 @@ __all__ = [
     "CheckinQRPayload",
     "CheckinResponse",
     "QRCodeResponse",
+    "PointEventResponse",
+    "StreakResponse",
+    "LeaderboardEntry",
+    "LeaderboardResponse",
+    "GamificationSummary",
     "LoginRequest",
     "MessageResponse",
     "RefreshRequest",

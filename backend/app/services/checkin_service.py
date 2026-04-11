@@ -5,10 +5,13 @@ from jose import JWTError
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.redis import get_redis
 from app.core.security import decode_token
 from app.models.checkin import Checkin
 from app.models.membership import Membership, MembershipStatus
+from app.models.point_event import PointActionType
 from app.repositories.checkin_repo import CheckinRepository
+from app.services.gamification_service import GamificationService
 
 CHECKIN_POINTS = 10
 
@@ -61,4 +64,21 @@ class CheckinService:
             )
 
         checkin = Checkin(user_id=user_id, points_earned=CHECKIN_POINTS)
-        return await self.repo.create(checkin)
+        checkin = await self.repo.create(checkin)
+
+        try:
+            redis = await get_redis()
+        except Exception:
+            redis = None
+
+        gamification = GamificationService(self.db, redis)
+        await gamification.credit_points(
+            user_id=user_id,
+            action_type=PointActionType.CHECKIN,
+            points=CHECKIN_POINTS,
+            description="Check-in na academia",
+            ref_id=checkin.id,
+        )
+        await gamification.update_streak(user_id)
+
+        return checkin

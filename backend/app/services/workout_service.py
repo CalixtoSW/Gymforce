@@ -1,14 +1,18 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.redis import get_redis
+from app.models.point_event import PointActionType
 from app.models.workout import Exercise, Workout, WorkoutSheet
 from app.repositories.workout_repo import WorkoutRepository
+from app.services.gamification_service import GamificationService
 
 WORKOUT_COMPLETE_POINTS = 25
 
 
 class WorkoutService:
     def __init__(self, db: AsyncSession):
+        self.db = db
         self.repo = WorkoutRepository(db)
 
     async def create_sheet(
@@ -53,7 +57,23 @@ class WorkoutService:
             duration_minutes=duration_minutes,
             points_earned=WORKOUT_COMPLETE_POINTS,
         )
-        return await self.repo.create_workout(workout)
+        workout = await self.repo.create_workout(workout)
+
+        try:
+            redis = await get_redis()
+        except Exception:
+            redis = None
+
+        gamification = GamificationService(self.db, redis)
+        await gamification.credit_points(
+            user_id=user_id,
+            action_type=PointActionType.WORKOUT_COMPLETE,
+            points=WORKOUT_COMPLETE_POINTS,
+            description=f"Treino concluido: {sheet.name}",
+            ref_id=workout.id,
+        )
+
+        return workout
 
     async def get_my_history(
         self,
