@@ -1,8 +1,10 @@
-import { useRouter } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,15 +12,13 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
-import {
-  BORDER_RADIUS,
-  COLORS,
-  FONT_SIZE,
-  SPACING,
-} from '@/constants/theme';
+import { PointsHistory } from '@/components/features/PointsHistory';
+import { StatCard } from '@/components/features/StatCard';
+import { TierBadge } from '@/components/features/TierBadge';
+import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
-import type { QRCodeData, WorkoutSheet } from '@/types';
+import type { GamificationSummary, PointEvent, QRCodeData, WorkoutSheet } from '@/types';
 
 function formatCountdown(totalSeconds: number): string {
   const safe = Math.max(0, totalSeconds);
@@ -29,39 +29,53 @@ function formatCountdown(totalSeconds: number): string {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const refreshUser = useAuthStore((state) => state.refreshUser);
 
-  const [qrData, setQrData] = useState<QRCodeData | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
-  const [sheet, setSheet] = useState<WorkoutSheet | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [qrLoading, setQrLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadQr = useCallback(async () => {
-    setQrLoading(true);
-    try {
-      const { data } = await api.get<QRCodeData>('/checkins/qr');
-      setQrData(data);
-      setSecondsLeft(data.expires_in_seconds);
-    } finally {
-      setQrLoading(false);
-    }
-  }, []);
+  const summaryQuery = useQuery({
+    queryKey: ['gamification-summary'],
+    queryFn: () => api.get<GamificationSummary>('/gamification/summary').then((r) => r.data),
+    staleTime: 30_000,
+  });
 
-  const loadHome = useCallback(async () => {
-    setLoading(true);
-    try {
-      await loadQr();
-      const { data } = await api.get<WorkoutSheet[]>('/workouts/sheets');
-      setSheet(data[0] ?? null);
-    } finally {
-      setLoading(false);
-    }
-  }, [loadQr]);
+  const historyQuery = useQuery({
+    queryKey: ['gamification-history'],
+    queryFn: () =>
+      api
+        .get<PointEvent[]>('/gamification/points/history?limit=5')
+        .then((r) => r.data),
+    staleTime: 30_000,
+  });
+
+  const qrQuery = useQuery({
+    queryKey: ['checkin-qr'],
+    queryFn: () => api.get<QRCodeData>('/checkins/qr').then((r) => r.data),
+    staleTime: 0,
+  });
+
+  const sheetsQuery = useQuery({
+    queryKey: ['workout-sheets'],
+    queryFn: () => api.get<WorkoutSheet[]>('/workouts/sheets').then((r) => r.data),
+    staleTime: 30_000,
+  });
+
+  const summary = summaryQuery.data;
+  const qrData = qrQuery.data;
+  const sheet = sheetsQuery.data?.[0] ?? null;
+  const refetchSummary = summaryQuery.refetch;
+  const refetchHistory = historyQuery.refetch;
+  const refetchQr = qrQuery.refetch;
+  const refetchSheets = sheetsQuery.refetch;
 
   useEffect(() => {
-    loadHome();
-  }, [loadHome]);
+    if (qrData) {
+      setSecondsLeft(qrData.expires_in_seconds);
+    }
+  }, [qrData]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -71,27 +85,44 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if (!qrData) {
-      return;
-    }
-    const refreshId = setTimeout(() => {
-      loadQr();
-    }, 4 * 60 * 1000);
-
-    return () => clearTimeout(refreshId);
-  }, [qrData, loadQr]);
-
-  useEffect(() => {
     if (secondsLeft === 60) {
-      loadQr();
+      refetchQr();
     }
-  }, [secondsLeft, loadQr]);
+  }, [refetchQr, secondsLeft]);
 
-  const greetingName = useMemo(() => {
-    return user?.name?.split(' ')[0] ?? 'Aluno';
-  }, [user?.name]);
+  useFocusEffect(
+    useCallback(() => {
+      refreshUser();
+      refetchSummary();
+      refetchHistory();
+      refetchQr();
+      refetchSheets();
+    }, [refetchHistory, refetchQr, refetchSheets, refetchSummary, refreshUser]),
+  );
 
-  if (loading) {
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshUser();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['gamification-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['gamification-history'] }),
+        queryClient.invalidateQueries({ queryKey: ['checkin-qr'] }),
+        queryClient.invalidateQueries({ queryKey: ['workout-sheets'] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [queryClient, refreshUser]);
+
+  const greetingName = useMemo(() => user?.name?.split(' ')[0] ?? 'Aluno', [user?.name]);
+
+  if (
+    summaryQuery.isLoading ||
+    historyQuery.isLoading ||
+    qrQuery.isLoading ||
+    sheetsQuery.isLoading
+  ) {
     return (
       <View style={styles.centeredContainer}>
         <ActivityIndicator color={COLORS.primary} />
@@ -100,15 +131,41 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <Text style={styles.greeting}>Ola, {greetingName}! 👋</Text>
+
+      <TierBadge tier={summary?.tier ?? user?.tier ?? 'bronze'} totalPoints={summary?.total_points ?? 0} />
+
+      <View style={styles.metricsRow}>
+        <StatCard
+          icon="🔥"
+          value={summary?.streak.current_streak ?? user?.streak_count ?? 0}
+          label="streak"
+          color={COLORS.streak}
+        />
+        <StatCard
+          icon="⭐"
+          value={(summary?.current_points ?? user?.current_points ?? 0).toLocaleString('pt-BR')}
+          label="pontos"
+          color={COLORS.xp}
+        />
+        <StatCard
+          icon="🏆"
+          value={summary?.rank ? `#${summary.rank.rank}` : '--'}
+          label="rank"
+          color={COLORS.reward}
+        />
+      </View>
 
       <View style={styles.qrCard}>
         <View style={styles.qrBox}>
           {qrData?.qr_token ? (
             <QRCode
               value={qrData.qr_token}
-              size={190}
+              size={180}
               color={COLORS.background}
               backgroundColor={COLORS.textPrimary}
             />
@@ -118,24 +175,13 @@ export default function HomeScreen() {
         </View>
         <Text style={styles.secondaryText}>Mostre na recepcao</Text>
         <Text style={styles.expireText}>Expira em: {formatCountdown(secondsLeft)}</Text>
-        <Pressable onPress={loadQr} style={styles.primaryButton}>
-          {qrLoading ? (
+        <Pressable onPress={() => refetchQr()} style={styles.primaryButton}>
+          {qrQuery.isFetching ? (
             <ActivityIndicator color={COLORS.textPrimary} />
           ) : (
             <Text style={styles.primaryButtonText}>Atualizar QR</Text>
           )}
         </Pressable>
-      </View>
-
-      <View style={styles.metricsRow}>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>🔥 {user?.streak_count ?? 0}</Text>
-          <Text style={styles.metricLabel}>streak</Text>
-        </View>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>⭐ {user?.current_points ?? 0}</Text>
-          <Text style={styles.metricLabel}>pontos</Text>
-        </View>
       </View>
 
       <View style={styles.workoutCard}>
@@ -158,6 +204,8 @@ export default function HomeScreen() {
           </Text>
         )}
       </View>
+
+      <PointsHistory events={historyQuery.data ?? []} />
     </ScrollView>
   );
 }
@@ -174,6 +222,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     gap: SPACING.md,
     padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
   expireText: {
     color: COLORS.textPrimary,
@@ -185,25 +234,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.xl,
     fontWeight: '700',
   },
-  metricCard: {
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    flex: 1,
-    gap: SPACING.xs,
-    padding: SPACING.md,
-  },
-  metricLabel: {
-    color: COLORS.textSecondary,
-    fontSize: FONT_SIZE.sm,
-  },
-  metricValue: {
-    color: COLORS.textPrimary,
-    fontSize: FONT_SIZE.lg,
-    fontWeight: '700',
-  },
   metricsRow: {
     flexDirection: 'row',
     gap: SPACING.md,
@@ -212,9 +242,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.md,
-    minHeight: 44,
     justifyContent: 'center',
     marginTop: SPACING.sm,
+    minHeight: 44,
     paddingHorizontal: SPACING.md,
   },
   primaryButtonText: {

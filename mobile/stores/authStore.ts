@@ -14,6 +14,7 @@ type AuthState = {
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
   fetchMe: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -61,5 +62,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fetchMe: async () => {
     const { data } = await api.get('/auth/me');
     set({ user: data, isAuthenticated: true });
+  },
+
+  refreshUser: async () => {
+    try {
+      await get().fetchMe();
+    } catch {
+      return;
+    }
   },
 }));

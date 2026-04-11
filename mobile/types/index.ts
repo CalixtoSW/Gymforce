@@ -57,3 +57,40 @@ export type QRCodeData = {
   qr_token: string;
   expires_in_seconds: number;
 };
+
+export type PointEvent = {
+  id: string;
+  action_type: string;
+  points: number;
+  description: string;
+  created_at: string;
+};
+
+export type StreakInfo = {
+  current_streak: number;
+  longest_streak: number;
+  freeze_available: boolean;
+  last_activity_date: string | null;
+};
+
+export type GamificationSummary = {
+  total_points: number;
+  current_points: number;
+  tier: UserTier;
+  streak: StreakInfo;
+  rank: { rank: number; points: number } | null;
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+  tier: string;
+  points: number;
+};
+
+export type LeaderboardResponse = {
+  leaderboard: LeaderboardEntry[];
+  my_rank: { rank: number; points: number } | null;
+};

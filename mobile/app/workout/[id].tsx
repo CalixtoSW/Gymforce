@@ -17,11 +17,13 @@ import {
   SPACING,
 } from '@/constants/theme';
 import { api } from '@/services/api';
+import { useAuthStore } from '@/stores/authStore';
 import type { Exercise, WorkoutSheet } from '@/types';
 
 export default function WorkoutDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const refreshUser = useAuthStore((state) => state.refreshUser);
 
   const [sheet, setSheet] = useState<WorkoutSheet | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,7 @@ export default function WorkoutDetailScreen() {
         sheet_id: sheet.id,
         duration_minutes: durationMinutes,
       });
+      await refreshUser();
 
       setSuccessMessage('Treino concluido! +25 pontos');
       setTimeout(() => {

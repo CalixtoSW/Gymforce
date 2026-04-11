@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { AppState } from 'react-native';
 import { useEffect, useMemo } from 'react';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -16,7 +17,7 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     SpaceMono: require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
-  const { isLoading, loadSession } = useAuthStore();
+  const { isAuthenticated, isLoading, loadSession, refreshUser } = useAuthStore();
 
   useEffect(() => {
     loadSession();
@@ -27,6 +28,16 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, isLoading]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && isAuthenticated) {
+        refreshUser();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [isAuthenticated, refreshUser]);
 
   if (!fontsLoaded || isLoading) {
     return null;
