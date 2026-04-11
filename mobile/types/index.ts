@@ -94,3 +94,27 @@ export type LeaderboardResponse = {
   leaderboard: LeaderboardEntry[];
   my_rank: { rank: number; points: number } | null;
 };
+
+export type Reward = {
+  id: string;
+  name: string;
+  description: string | null;
+  cost_points: number;
+  stock: number | null;
+  image_url: string | null;
+  is_active: boolean;
+  category: string | null;
+};
+
+export type RedemptionStatus = 'pending' | 'delivered' | 'cancelled';
+
+export type Redemption = {
+  id: string;
+  user_id: string;
+  reward_id: string;
+  points_spent: number;
+  status: RedemptionStatus;
+  notes: string | null;
+  created_at: string;
+  reward: Reward;
+};
