@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useAuthStore } from '@/stores/authStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,14 +16,19 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     SpaceMono: require('@/assets/fonts/SpaceMono-Regular.ttf'),
   });
+  const { isLoading, loadSession } = useAuthStore();
 
   useEffect(() => {
-    if (fontsLoaded) {
+    loadSession();
+  }, [loadSession]);
+
+  useEffect(() => {
+    if (fontsLoaded && !isLoading) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, isLoading]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || isLoading) {
     return null;
   }
 
