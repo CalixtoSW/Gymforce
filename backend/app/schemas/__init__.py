@@ -6,6 +6,7 @@ from app.schemas.auth import (
     TokenResponse,
 )
 from app.schemas.checkin import CheckinQRPayload, CheckinResponse, QRCodeResponse
+from app.schemas.dashboard import CheckinsByDay, CheckinsByHour, DashboardKPIs
 from app.schemas.gamification import (
     GamificationSummary,
     LeaderboardEntry,
@@ -15,6 +16,12 @@ from app.schemas.gamification import (
 )
 from app.schemas.health import HealthResponse
 from app.schemas.plan import PlanCreate, PlanResponse
+from app.schemas.reward import (
+    RedemptionResponse,
+    RewardCreate,
+    RewardResponse,
+    RewardUpdate,
+)
 from app.schemas.user import UserAdminUpdate, UserResponse, UserUpdate
 from app.schemas.workout import (
     ExerciseCreate,
@@ -30,6 +37,9 @@ __all__ = [
     "CheckinQRPayload",
     "CheckinResponse",
     "QRCodeResponse",
+    "DashboardKPIs",
+    "CheckinsByHour",
+    "CheckinsByDay",
     "PointEventResponse",
     "StreakResponse",
     "LeaderboardEntry",
@@ -42,6 +52,10 @@ __all__ = [
     "TokenResponse",
     "PlanCreate",
     "PlanResponse",
+    "RewardCreate",
+    "RewardUpdate",
+    "RewardResponse",
+    "RedemptionResponse",
     "ExerciseCreate",
     "ExerciseResponse",
     "WorkoutComplete",

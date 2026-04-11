@@ -39,6 +39,7 @@ class GamificationService:
         points: int,
         description: str,
         ref_id: str | None = None,
+        commit: bool = True,
     ) -> PointEvent:
         event = PointEvent(
             user_id=user_id,
@@ -56,8 +57,11 @@ class GamificationService:
             await self._check_tier_promotion(user)
             await self._update_leaderboard(user_id, points)
 
-        await self.db.commit()
-        await self.db.refresh(event)
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(event)
+        else:
+            await self.db.flush()
         return event
 
     async def debit_points(
@@ -66,6 +70,7 @@ class GamificationService:
         points: int,
         description: str,
         ref_id: str | None = None,
+        commit: bool = True,
     ) -> PointEvent:
         user = await self.user_repo.get_by_id(user_id)
         if not user or user.current_points < points:
@@ -84,8 +89,11 @@ class GamificationService:
         )
         self.db.add(event)
         user.current_points -= points
-        await self.db.commit()
-        await self.db.refresh(event)
+        if commit:
+            await self.db.commit()
+            await self.db.refresh(event)
+        else:
+            await self.db.flush()
         return event
 
     async def update_streak(self, user_id: str) -> UserStreak:
