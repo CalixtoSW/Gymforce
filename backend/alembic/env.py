@@ -7,9 +7,9 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+from app import models  # noqa: F401
 from app.core.config import settings
 from app.models.base import Base
-from app.models.user import User  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

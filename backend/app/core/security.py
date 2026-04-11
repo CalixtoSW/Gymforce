@@ -39,6 +39,16 @@ def create_refresh_token(subject: str) -> str:
     )
 
 
+def create_qr_token(user_id: str) -> str:
+    expire = datetime.now(UTC) + timedelta(minutes=5)
+    payload = {"sub": user_id, "exp": expire, "type": "qr_checkin"}
+    return jwt.encode(
+        payload,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
 def decode_token(token: str) -> dict[str, Any]:
     return jwt.decode(
         token,
