@@ -14,11 +14,18 @@ import QRCode from 'react-native-qrcode-svg';
 
 import { PointsHistory } from '@/components/features/PointsHistory';
 import { StatCard } from '@/components/features/StatCard';
+import { StreakRiskAlert } from '@/components/features/StreakRiskAlert';
 import { TierBadge } from '@/components/features/TierBadge';
 import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
-import type { GamificationSummary, PointEvent, QRCodeData, WorkoutSheet } from '@/types';
+import type {
+  BadgeListResponse,
+  GamificationSummary,
+  PointEvent,
+  QRCodeData,
+  WorkoutSheet,
+} from '@/types';
 
 function formatCountdown(totalSeconds: number): string {
   const safe = Math.max(0, totalSeconds);
@@ -63,6 +70,12 @@ export default function HomeScreen() {
     staleTime: 30_000,
   });
 
+  const badgesQuery = useQuery({
+    queryKey: ['badges-summary'],
+    queryFn: () => api.get<BadgeListResponse>('/badges').then((r) => r.data),
+    staleTime: 30_000,
+  });
+
   const summary = summaryQuery.data;
   const qrData = qrQuery.data;
   const sheet = sheetsQuery.data?.[0] ?? null;
@@ -70,6 +83,7 @@ export default function HomeScreen() {
   const refetchHistory = historyQuery.refetch;
   const refetchQr = qrQuery.refetch;
   const refetchSheets = sheetsQuery.refetch;
+  const refetchBadges = badgesQuery.refetch;
 
   useEffect(() => {
     if (qrData) {
@@ -97,7 +111,15 @@ export default function HomeScreen() {
       refetchHistory();
       refetchQr();
       refetchSheets();
-    }, [refetchHistory, refetchQr, refetchSheets, refetchSummary, refreshUser]),
+      refetchBadges();
+    }, [
+      refetchBadges,
+      refetchHistory,
+      refetchQr,
+      refetchSheets,
+      refetchSummary,
+      refreshUser,
+    ]),
   );
 
   const onRefresh = useCallback(async () => {
@@ -109,6 +131,7 @@ export default function HomeScreen() {
         queryClient.invalidateQueries({ queryKey: ['gamification-history'] }),
         queryClient.invalidateQueries({ queryKey: ['checkin-qr'] }),
         queryClient.invalidateQueries({ queryKey: ['workout-sheets'] }),
+        queryClient.invalidateQueries({ queryKey: ['badges-summary'] }),
       ]);
     } finally {
       setRefreshing(false);
@@ -121,7 +144,8 @@ export default function HomeScreen() {
     summaryQuery.isLoading ||
     historyQuery.isLoading ||
     qrQuery.isLoading ||
-    sheetsQuery.isLoading
+    sheetsQuery.isLoading ||
+    badgesQuery.isLoading
   ) {
     return (
       <View style={styles.centeredContainer}>
@@ -130,6 +154,13 @@ export default function HomeScreen() {
     );
   }
 
+  const today = new Date().toISOString().split('T')[0];
+  const currentStreak = summary?.streak.current_streak ?? 0;
+  const isStreakAtRisk =
+    currentStreak > 0 && summary?.streak.last_activity_date !== today;
+  const badgesEarned = badgesQuery.data?.total_earned ?? 0;
+  const badgesAvailable = badgesQuery.data?.total_available ?? 0;
+
   return (
     <ScrollView
       contentContainerStyle={styles.container}
@@ -137,7 +168,17 @@ export default function HomeScreen() {
     >
       <Text style={styles.greeting}>Ola, {greetingName}! 👋</Text>
 
-      <TierBadge tier={summary?.tier ?? user?.tier ?? 'bronze'} totalPoints={summary?.total_points ?? 0} />
+      <TierBadge
+        tier={summary?.tier ?? user?.tier ?? 'bronze'}
+        totalPoints={summary?.total_points ?? 0}
+      />
+
+      {isStreakAtRisk && (
+        <StreakRiskAlert
+          streakCount={currentStreak}
+          freezeAvailable={summary?.streak.freeze_available ?? false}
+        />
+      )}
 
       <View style={styles.metricsRow}>
         <StatCard
@@ -148,7 +189,9 @@ export default function HomeScreen() {
         />
         <StatCard
           icon="⭐"
-          value={(summary?.current_points ?? user?.current_points ?? 0).toLocaleString('pt-BR')}
+          value={(summary?.current_points ?? user?.current_points ?? 0).toLocaleString(
+            'pt-BR',
+          )}
           label="pontos"
           color={COLORS.xp}
         />
@@ -159,6 +202,16 @@ export default function HomeScreen() {
           color={COLORS.reward}
         />
       </View>
+
+      <Pressable onPress={() => router.push('/badges')} style={styles.badgesCard}>
+        <View>
+          <Text style={styles.badgesTitle}>🏆 Conquistas</Text>
+          <Text style={styles.badgesSubtitle}>
+            {badgesEarned} desbloqueadas de {badgesAvailable}
+          </Text>
+        </View>
+        <Text style={styles.badgesArrow}>▶</Text>
+      </Pressable>
 
       <View style={styles.qrCard}>
         <View style={styles.qrBox}>
@@ -211,6 +264,31 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  badgesArrow: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+  },
+  badgesCard: {
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+  },
+  badgesSubtitle: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.sm,
+    marginTop: SPACING.xs,
+  },
+  badgesTitle: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+  },
   centeredContainer: {
     alignItems: 'center',
     backgroundColor: COLORS.background,

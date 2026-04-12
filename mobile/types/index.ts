@@ -118,3 +118,21 @@ export type Redemption = {
   created_at: string;
   reward: Reward;
 };
+
+export type Badge = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  icon: string;
+  points_bonus: number;
+  category: string;
+  earned: boolean;
+  earned_at: string | null;
+};
+
+export type BadgeListResponse = {
+  badges: Badge[];
+  total_earned: number;
+  total_available: number;
+};

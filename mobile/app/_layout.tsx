@@ -7,6 +7,7 @@ import { AppState } from 'react-native';
 import { useEffect, useMemo } from 'react';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { registerForPushNotifications } from '@/services/notifications';
 import { useAuthStore } from '@/stores/authStore';
 
 SplashScreen.preventAutoHideAsync();
@@ -20,7 +21,15 @@ export default function RootLayout() {
   const { isAuthenticated, isLoading, loadSession, refreshUser } = useAuthStore();
 
   useEffect(() => {
-    loadSession();
+    const init = async () => {
+      await loadSession();
+      const state = useAuthStore.getState();
+      if (state.isAuthenticated) {
+        await registerForPushNotifications();
+      }
+    };
+
+    init();
   }, [loadSession]);
 
   useEffect(() => {
@@ -50,6 +59,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="redemptions" />
+        <Stack.Screen name="badges" />
       </Stack>
     </QueryClientProvider>
   );
