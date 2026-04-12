@@ -7,6 +7,7 @@ from app.core.redis import get_redis
 from app.models.point_event import PointActionType
 from app.models.redemption import Redemption, RedemptionStatus
 from app.models.reward import Reward
+from app.services.badge_service import BadgeService
 from app.services.gamification_service import GamificationService
 
 
@@ -64,6 +65,8 @@ class RewardService:
             reward.stock -= 1
 
         await self.db.commit()
+        badge_service = BadgeService(self.db)
+        await badge_service.evaluate(user_id)
         return await self._get_redemption_with_reward(redemption.id)
 
     async def cancel_redemption(self, redemption_id: str, admin_id: str) -> Redemption:

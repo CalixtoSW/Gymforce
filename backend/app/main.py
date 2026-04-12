@@ -5,10 +5,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import (
     auth,
+    badges,
     checkins,
     dashboard,
     gamification,
     health,
+    notifications,
     plans,
     rewards,
     users,
@@ -47,6 +49,8 @@ def create_app() -> FastAPI:
     app.include_router(plans.router, prefix="/api/v1")
     app.include_router(gamification.router, prefix="/api/v1")
     app.include_router(rewards.router, prefix="/api/v1")
+    app.include_router(badges.router, prefix="/api/v1")
+    app.include_router(notifications.router, prefix="/api/v1")
     app.include_router(dashboard.router, prefix="/api/v1")
     return app
 

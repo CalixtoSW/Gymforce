@@ -5,6 +5,7 @@ from app.schemas.auth import (
     RegisterRequest,
     TokenResponse,
 )
+from app.schemas.badge import BadgeListResponse, BadgeResponse
 from app.schemas.checkin import CheckinQRPayload, CheckinResponse, QRCodeResponse
 from app.schemas.dashboard import CheckinsByDay, CheckinsByHour, DashboardKPIs
 from app.schemas.gamification import (
@@ -15,6 +16,11 @@ from app.schemas.gamification import (
     StreakResponse,
 )
 from app.schemas.health import HealthResponse
+from app.schemas.notification import (
+    PushTokenRegister,
+    PushTokenResponse,
+    SendNotificationRequest,
+)
 from app.schemas.plan import PlanCreate, PlanResponse
 from app.schemas.reward import (
     RedemptionResponse,
@@ -50,8 +56,13 @@ __all__ = [
     "RefreshRequest",
     "RegisterRequest",
     "TokenResponse",
+    "BadgeResponse",
+    "BadgeListResponse",
     "PlanCreate",
     "PlanResponse",
+    "PushTokenRegister",
+    "PushTokenResponse",
+    "SendNotificationRequest",
     "RewardCreate",
     "RewardUpdate",
     "RewardResponse",

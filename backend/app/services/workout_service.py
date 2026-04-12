@@ -5,6 +5,7 @@ from app.core.redis import get_redis
 from app.models.point_event import PointActionType
 from app.models.workout import Exercise, Workout, WorkoutSheet
 from app.repositories.workout_repo import WorkoutRepository
+from app.services.badge_service import BadgeService
 from app.services.gamification_service import GamificationService
 
 WORKOUT_COMPLETE_POINTS = 25
@@ -72,6 +73,8 @@ class WorkoutService:
             description=f"Treino concluido: {sheet.name}",
             ref_id=workout.id,
         )
+        badge_service = BadgeService(self.db)
+        await badge_service.evaluate(user_id)
 
         return workout
 

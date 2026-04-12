@@ -11,6 +11,7 @@ from app.models.checkin import Checkin
 from app.models.membership import Membership, MembershipStatus
 from app.models.point_event import PointActionType
 from app.repositories.checkin_repo import CheckinRepository
+from app.services.badge_service import BadgeService
 from app.services.gamification_service import GamificationService
 
 CHECKIN_POINTS = 10
@@ -80,5 +81,7 @@ class CheckinService:
             ref_id=checkin.id,
         )
         await gamification.update_streak(user_id)
+        badge_service = BadgeService(self.db)
+        await badge_service.evaluate(user_id)
 
         return checkin
