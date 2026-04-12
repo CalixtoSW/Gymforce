@@ -1,9 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
+import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
+import type { MembershipInfo } from '@/types';
 
 const tierColorMap = {
   bronze: COLORS.tierBronze,
@@ -24,11 +27,20 @@ export default function ProfileScreen() {
     }
     return tierColorMap[user.tier] ?? COLORS.primary;
   }, [user]);
+  const membershipQuery = useQuery({
+    queryKey: ['profile-membership-status'],
+    queryFn: () => api.get<MembershipInfo | null>('/payments/my-membership').then((r) => r.data),
+    staleTime: 30_000,
+  });
 
   const handleLogout = async () => {
     await logout();
     router.replace('/(auth)/login');
   };
+  const membership = membershipQuery.data;
+  const hasActiveMembership = Boolean(
+    membership && membership.status === 'active' && (membership.days_remaining ?? -1) >= 0,
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -43,15 +55,29 @@ export default function ProfileScreen() {
         <Text style={[styles.tierText, { color: tierColor }]}>Tier: {user?.tier ?? '-'}</Text>
         <Text style={styles.metric}>Pontos: {user?.total_points ?? 0}</Text>
         <Text style={styles.metric}>Streak: {user?.streak_count ?? 0} dias</Text>
+        <View
+          style={[
+            styles.membershipBadge,
+            hasActiveMembership ? styles.membershipActive : styles.membershipExpired,
+          ]}
+        >
+          <Text style={styles.membershipBadgeText}>
+            {hasActiveMembership
+              ? `Matrícula ativa — ${membership?.days_remaining ?? 0} dias restantes`
+              : 'Matrícula vencida'}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.menuCard}>
-        <Pressable onPress={() => router.push('/badges')} style={styles.menuAction}>
-          <Text style={styles.menuItem}>Conquistas ▶</Text>
+        <Pressable onPress={() => router.push('/membership')} style={styles.menuAction}>
+          <Text style={styles.menuItem}>💳 Minha Matrícula ▶</Text>
         </Pressable>
-        <Text style={styles.menuItem}>Editar Perfil - Em breve</Text>
-        <Text style={styles.menuItem}>Notificacoes - Em breve</Text>
-        <Text style={styles.menuItem}>Sobre o App - Em breve</Text>
+        <Pressable onPress={() => router.push('/badges')} style={styles.menuAction}>
+          <Text style={styles.menuItem}>🏆 Conquistas ▶</Text>
+        </Pressable>
+        <Text style={styles.menuItem}>⚙️ Notificações ▶</Text>
+        <Text style={styles.menuItem}>ℹ️ Sobre o App ▶</Text>
       </View>
 
       <Pressable onPress={handleLogout} style={styles.logoutButton}>
@@ -122,6 +148,27 @@ const styles = StyleSheet.create({
   metric: {
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.md,
+  },
+  membershipActive: {
+    backgroundColor: 'rgba(34, 197, 94, 0.16)',
+    borderColor: COLORS.success,
+  },
+  membershipBadge: {
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    width: '100%',
+  },
+  membershipBadgeText: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+  membershipExpired: {
+    backgroundColor: 'rgba(245, 158, 11, 0.14)',
+    borderColor: COLORS.warning,
   },
   name: {
     color: COLORS.textPrimary,

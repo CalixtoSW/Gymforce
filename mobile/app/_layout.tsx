@@ -60,6 +60,9 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="redemptions" />
         <Stack.Screen name="badges" />
+        <Stack.Screen name="membership" />
+        <Stack.Screen name="plans" />
+        <Stack.Screen name="payment/[id]" />
       </Stack>
     </QueryClientProvider>
   );
