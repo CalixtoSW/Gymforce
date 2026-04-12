@@ -10,6 +10,7 @@ from app.core.database import AsyncSessionLocal, engine
 from app.core.security import hash_password
 from app.models import Base
 from app.models.badge import Badge
+from app.models.challenge import Challenge, ChallengeGoalType
 from app.models.membership import Membership, MembershipStatus
 from app.models.plan import Plan
 from app.models.reward import Reward
@@ -349,6 +350,56 @@ async def seed() -> None:
             db.add(badge)
         await db.flush()
         print(f'{len(badges_data)} badges criados')
+
+        challenges_data = [
+            (
+                'Maratona de Treinos',
+                'Complete 10 treinos este mês',
+                ChallengeGoalType.WORKOUTS,
+                10,
+                150,
+                '🏃',
+            ),
+            (
+                'Check-in Master',
+                'Faça 20 check-ins este mês',
+                ChallengeGoalType.CHECKINS,
+                20,
+                200,
+                '🚪',
+            ),
+            (
+                'Caçador de Pontos',
+                'Acumule 500 pontos este mês',
+                ChallengeGoalType.POINTS,
+                500,
+                100,
+                '⭐',
+            ),
+            (
+                'Streak de Fogo',
+                'Mantenha um streak de 14 dias',
+                ChallengeGoalType.STREAK,
+                14,
+                250,
+                '🔥',
+            ),
+        ]
+        for title, desc, goal_type, goal_value, reward_points, icon in challenges_data:
+            challenge = Challenge(
+                id=str(uuid4()),
+                title=title,
+                description=desc,
+                goal_type=goal_type,
+                goal_value=goal_value,
+                reward_points=reward_points,
+                start_date=today,
+                end_date=today + timedelta(days=30),
+                icon=icon,
+            )
+            db.add(challenge)
+        await db.flush()
+        print(f'{len(challenges_data)} desafios criados')
 
         await db.commit()
 

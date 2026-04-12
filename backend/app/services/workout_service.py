@@ -6,6 +6,7 @@ from app.models.point_event import PointActionType
 from app.models.workout import Exercise, Workout, WorkoutSheet
 from app.repositories.workout_repo import WorkoutRepository
 from app.services.badge_service import BadgeService
+from app.services.challenge_service import ChallengeService
 from app.services.gamification_service import GamificationService
 
 WORKOUT_COMPLETE_POINTS = 25
@@ -75,6 +76,8 @@ class WorkoutService:
         )
         badge_service = BadgeService(self.db)
         await badge_service.evaluate(user_id)
+        challenge_service = ChallengeService(self.db)
+        await challenge_service.update_progress_for_user(user_id)
 
         return workout
 
