@@ -14,6 +14,7 @@ const registerSchema = z
     email: z.email('Informe um email válido'),
     password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
     confirmPassword: z.string(),
+    referralCode: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     error: 'As senhas nao conferem',
@@ -39,6 +40,7 @@ export default function RegisterScreen() {
       email: '',
       password: '',
       confirmPassword: '',
+      referralCode: '',
     },
   });
 
@@ -47,7 +49,7 @@ export default function RegisterScreen() {
     setIsSubmitting(true);
 
     try {
-      await register(data.name, data.email, data.password);
+      await register(data.name, data.email, data.password, data.referralCode);
       router.replace('/(tabs)/home');
     } catch {
       setSubmitError('Nao foi possivel criar conta. Tente novamente.');
@@ -126,6 +128,21 @@ export default function RegisterScreen() {
         {errors.confirmPassword ? (
           <Text style={styles.error}>{errors.confirmPassword.message}</Text>
         ) : null}
+
+        <Controller
+          control={control}
+          name="referralCode"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              autoCapitalize="characters"
+              onChangeText={onChange}
+              placeholder="🎟️ Código de indicação (opcional)"
+              placeholderTextColor={COLORS.textMuted}
+              style={styles.input}
+              value={value}
+            />
+          )}
+        />
 
         {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
 

@@ -27,6 +27,7 @@ export default function ProfileScreen() {
     }
     return tierColorMap[user.tier] ?? COLORS.primary;
   }, [user]);
+
   const membershipQuery = useQuery({
     queryKey: ['profile-membership-status'],
     queryFn: () => api.get<MembershipInfo | null>('/payments/my-membership').then((r) => r.data),
@@ -37,6 +38,7 @@ export default function ProfileScreen() {
     await logout();
     router.replace('/(auth)/login');
   };
+
   const membership = membershipQuery.data;
   const hasActiveMembership = Boolean(
     membership && membership.status === 'active' && (membership.days_remaining ?? -1) >= 0,
@@ -51,7 +53,7 @@ export default function ProfileScreen() {
       <Text style={styles.name}>{user?.name ?? 'GymForce User'}</Text>
       <Text style={styles.email}>{user?.email ?? '-'}</Text>
 
-      <View style={[styles.tierCard, { borderColor: tierColor }]}> 
+      <View style={[styles.tierCard, { borderColor: tierColor }]}>
         <Text style={[styles.tierText, { color: tierColor }]}>Tier: {user?.tier ?? '-'}</Text>
         <Text style={styles.metric}>Pontos: {user?.total_points ?? 0}</Text>
         <Text style={styles.metric}>Streak: {user?.streak_count ?? 0} dias</Text>
@@ -72,6 +74,15 @@ export default function ProfileScreen() {
       <View style={styles.menuCard}>
         <Pressable onPress={() => router.push('/membership')} style={styles.menuAction}>
           <Text style={styles.menuItem}>💳 Minha Matrícula ▶</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/assessment')} style={styles.menuAction}>
+          <Text style={styles.menuItem}>📊 Avaliação Física ▶</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/challenges')} style={styles.menuAction}>
+          <Text style={styles.menuItem}>🎯 Desafios ▶</Text>
+        </Pressable>
+        <Pressable onPress={() => router.push('/referral')} style={styles.menuAction}>
+          <Text style={styles.menuItem}>👥 Indicar Amigos ▶</Text>
         </Pressable>
         <Pressable onPress={() => router.push('/badges')} style={styles.menuAction}>
           <Text style={styles.menuItem}>🏆 Conquistas ▶</Text>
@@ -118,15 +129,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.error,
     borderRadius: BORDER_RADIUS.md,
+    justifyContent: 'center',
     marginTop: SPACING.xl,
     minHeight: 48,
-    justifyContent: 'center',
     width: '100%',
   },
   logoutText: {
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.md,
     fontWeight: '700',
+  },
+  menuAction: {
+    paddingVertical: SPACING.xs,
   },
   menuCard: {
     backgroundColor: COLORS.surface,
@@ -137,17 +151,10 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     width: '100%',
   },
-  menuAction: {
-    paddingVertical: SPACING.xs,
-  },
   menuItem: {
     color: COLORS.textSecondary,
     fontSize: FONT_SIZE.md,
     paddingVertical: SPACING.xs,
-  },
-  metric: {
-    color: COLORS.textPrimary,
-    fontSize: FONT_SIZE.md,
   },
   membershipActive: {
     backgroundColor: 'rgba(34, 197, 94, 0.16)',
@@ -169,6 +176,10 @@ const styles = StyleSheet.create({
   membershipExpired: {
     backgroundColor: 'rgba(245, 158, 11, 0.14)',
     borderColor: COLORS.warning,
+  },
+  metric: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.md,
   },
   name: {
     color: COLORS.textPrimary,
