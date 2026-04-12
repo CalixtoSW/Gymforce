@@ -1,9 +1,46 @@
 import * as SecureStore from 'expo-secure-store';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = __DEV__
-  ? 'http://localhost:8000/api/v1'
-  : 'https://api.gymforce.app/api/v1';
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ??
+  (__DEV__ ? 'http://localhost:8001/api/v1' : 'https://api.gymforce.app/api/v1');
+
+const isBrowser = typeof window !== 'undefined';
+
+function getStorageKey(key: string): string {
+  return `gymforce_${key}`;
+}
+
+async function getToken(key: string): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch {
+    if (isBrowser) {
+      return window.localStorage.getItem(getStorageKey(key));
+    }
+    return null;
+  }
+}
+
+async function setToken(key: string, value: string): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(key, value);
+  } catch {
+    if (isBrowser) {
+      window.localStorage.setItem(getStorageKey(key), value);
+    }
+  }
+}
+
+async function deleteToken(key: string): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch {
+    if (isBrowser) {
+      window.localStorage.removeItem(getStorageKey(key));
+    }
+  }
+}
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -27,14 +64,14 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refresh = await SecureStore.getItemAsync('refresh_token');
+        const refresh = await getToken('refresh_token');
         if (!refresh) {
           throw new Error('No refresh token');
         }
 
         const { data } = await api.post('/auth/refresh', { refresh_token: refresh });
 
-        await SecureStore.setItemAsync('access_token', data.access_token);
+        await setToken('access_token', data.access_token);
         api.defaults.headers.common.Authorization = `Bearer ${data.access_token}`;
 
         if (originalRequest.headers) {
@@ -43,8 +80,8 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch {
-        await SecureStore.deleteItemAsync('access_token');
-        await SecureStore.deleteItemAsync('refresh_token');
+        await deleteToken('access_token');
+        await deleteToken('refresh_token');
         delete api.defaults.headers.common.Authorization;
       }
     }

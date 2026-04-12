@@ -4,6 +4,43 @@ import { create } from 'zustand';
 import type { User } from '@/types';
 import { api } from '@/services/api';
 
+const isBrowser = typeof window !== 'undefined';
+
+function getStorageKey(key: string): string {
+  return `gymforce_${key}`;
+}
+
+async function setToken(key: string, value: string): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(key, value);
+  } catch {
+    if (isBrowser) {
+      window.localStorage.setItem(getStorageKey(key), value);
+    }
+  }
+}
+
+async function getToken(key: string): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch {
+    if (isBrowser) {
+      return window.localStorage.getItem(getStorageKey(key));
+    }
+    return null;
+  }
+}
+
+async function deleteToken(key: string): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch {
+    if (isBrowser) {
+      window.localStorage.removeItem(getStorageKey(key));
+    }
+  }
+}
+
 type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
@@ -24,30 +61,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    await SecureStore.setItemAsync('access_token', data.access_token);
-    await SecureStore.setItemAsync('refresh_token', data.refresh_token);
+    await setToken('access_token', data.access_token);
+    await setToken('refresh_token', data.refresh_token);
     api.defaults.headers.common.Authorization = `Bearer ${data.access_token}`;
     await get().fetchMe();
   },
 
   register: async (name, email, password) => {
     const { data } = await api.post('/auth/register', { name, email, password });
-    await SecureStore.setItemAsync('access_token', data.access_token);
-    await SecureStore.setItemAsync('refresh_token', data.refresh_token);
+    await setToken('access_token', data.access_token);
+    await setToken('refresh_token', data.refresh_token);
     api.defaults.headers.common.Authorization = `Bearer ${data.access_token}`;
     await get().fetchMe();
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('access_token');
-    await SecureStore.deleteItemAsync('refresh_token');
+    await deleteToken('access_token');
+    await deleteToken('refresh_token');
     delete api.defaults.headers.common.Authorization;
     set({ user: null, isAuthenticated: false });
   },
 
   loadSession: async () => {
     try {
-      const token = await SecureStore.getItemAsync('access_token');
+      const token = await getToken('access_token');
       if (token) {
         api.defaults.headers.common.Authorization = `Bearer ${token}`;
         await get().fetchMe();
