@@ -16,6 +16,12 @@ Notifications.setNotificationHandler({
 });
 
 export async function registerForPushNotifications(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    // Evita crash no Expo Web quando VAPID não está configurado.
+    console.log('Push notifications web desabilitado no ambiente local.');
+    return null;
+  }
+
   if (!Device.isDevice) {
     console.log('Push notifications nao funcionam no emulador');
     return null;
@@ -46,9 +52,15 @@ export async function registerForPushNotifications(): Promise<string | null> {
     Constants.expoConfig?.extra?.eas?.projectId ??
     Constants.easConfig?.projectId;
 
-  const tokenData = await Notifications.getExpoPushTokenAsync({
-    projectId,
-  });
+  let tokenData: Notifications.ExpoPushToken;
+  try {
+    tokenData = await Notifications.getExpoPushTokenAsync({
+      projectId,
+    });
+  } catch (error) {
+    console.error('Erro ao obter Expo push token:', error);
+    return null;
+  }
 
   const token = tokenData.data;
 
