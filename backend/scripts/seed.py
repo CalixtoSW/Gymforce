@@ -9,6 +9,7 @@ from uuid import uuid4
 from app.core.database import AsyncSessionLocal, engine
 from app.core.security import hash_password
 from app.models import Base
+from app.models.badge import Badge
 from app.models.membership import Membership, MembershipStatus
 from app.models.plan import Plan
 from app.models.reward import Reward
@@ -287,6 +288,67 @@ async def seed() -> None:
             db.add(reward)
         await db.flush()
         print(f'{len(rewards)} recompensas criadas')
+
+        badges_data = [
+            ('early_bird', 'Madrugador', '5 check-ins antes das 7h', '🌅', 50, 'workout'),
+            (
+                'first_week',
+                'Primeira Semana',
+                '3 treinos na primeira semana',
+                '💪',
+                30,
+                'milestone',
+            ),
+            ('streak_7', 'Streak Semanal', 'Manter streak de 7 dias', '🔥', 0, 'streak'),
+            ('streak_30', 'Streak Mensal', 'Manter streak de 30 dias', '🔥', 0, 'streak'),
+            ('unstoppable', 'Incansável', '30 treinos em um mês', '🏋️', 200, 'workout'),
+            (
+                'loyal_member',
+                'Fidelidade',
+                '6 meses de matrícula contínua',
+                '🎯',
+                500,
+                'milestone',
+            ),
+            (
+                'top_3_monthly',
+                'Top 3',
+                'Terminar no top 3 do ranking mensal',
+                '🥇',
+                300,
+                'social',
+            ),
+            ('tier_diamond', 'Diamante', 'Atingir tier Diamante', '💎', 0, 'milestone'),
+            (
+                'first_redeem',
+                'Primeiro Resgate',
+                'Fazer o primeiro resgate de recompensa',
+                '🛒',
+                20,
+                'milestone',
+            ),
+            (
+                'hundred_checkins',
+                'Centenário',
+                'Completar 100 check-ins',
+                '💯',
+                500,
+                'milestone',
+            ),
+        ]
+        for code, name, desc, icon, points_bonus, category in badges_data:
+            badge = Badge(
+                id=str(uuid4()),
+                code=code,
+                name=name,
+                description=desc,
+                icon=icon,
+                points_bonus=points_bonus,
+                category=category,
+            )
+            db.add(badge)
+        await db.flush()
+        print(f'{len(badges_data)} badges criados')
 
         await db.commit()
 

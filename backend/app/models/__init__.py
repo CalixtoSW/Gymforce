@@ -1,18 +1,24 @@
+from app.models.badge import Badge
 from app.models.base import Base, TimestampMixin, UUIDMixin
 from app.models.checkin import Checkin
 from app.models.membership import Membership
 from app.models.plan import Plan
 from app.models.point_event import PointActionType, PointEvent
+from app.models.push_token import PushToken
 from app.models.redemption import Redemption, RedemptionStatus
 from app.models.reward import Reward
 from app.models.streak import UserStreak
 from app.models.user import User
+from app.models.user_badge import UserBadge
 from app.models.workout import Exercise, Workout, WorkoutSheet
 
 __all__ = [
     "Base",
     "TimestampMixin",
     "UUIDMixin",
+    "Badge",
+    "UserBadge",
+    "PushToken",
     "User",
     "Plan",
     "Membership",
