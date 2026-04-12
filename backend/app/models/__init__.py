@@ -2,6 +2,7 @@ from app.models.badge import Badge
 from app.models.base import Base, TimestampMixin, UUIDMixin
 from app.models.checkin import Checkin
 from app.models.membership import Membership
+from app.models.payment import Payment, PaymentMethod, PaymentStatus
 from app.models.plan import Plan
 from app.models.point_event import PointActionType, PointEvent
 from app.models.push_token import PushToken
@@ -22,6 +23,9 @@ __all__ = [
     "User",
     "Plan",
     "Membership",
+    "Payment",
+    "PaymentStatus",
+    "PaymentMethod",
     "PointEvent",
     "PointActionType",
     "Reward",

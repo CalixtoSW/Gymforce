@@ -21,6 +21,12 @@ from app.schemas.notification import (
     PushTokenResponse,
     SendNotificationRequest,
 )
+from app.schemas.payment import (
+    CreatePixPaymentRequest,
+    MembershipResponse,
+    PaymentResponse,
+    PixPaymentResponse,
+)
 from app.schemas.plan import PlanCreate, PlanResponse
 from app.schemas.reward import (
     RedemptionResponse,
@@ -63,6 +69,10 @@ __all__ = [
     "PushTokenRegister",
     "PushTokenResponse",
     "SendNotificationRequest",
+    "CreatePixPaymentRequest",
+    "PixPaymentResponse",
+    "PaymentResponse",
+    "MembershipResponse",
     "RewardCreate",
     "RewardUpdate",
     "RewardResponse",
