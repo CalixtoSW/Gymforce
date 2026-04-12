@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "CHANGE-ME-IN-PRODUCTION"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    MP_ACCESS_TOKEN: str = ""
+    MP_PUBLIC_KEY: str = ""
+    MP_WEBHOOK_SECRET: str = ""
+    MP_PIX_EXPIRATION_MINUTES: int = 30
     CORS_ORIGINS: list[str] = Field(
         default_factory=lambda: ["http://localhost:8081", "http://localhost:3000"]
     )

@@ -11,6 +11,7 @@ from app.api.v1 import (
     gamification,
     health,
     notifications,
+    payments,
     plans,
     rewards,
     users,
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(rewards.router, prefix="/api/v1")
     app.include_router(badges.router, prefix="/api/v1")
     app.include_router(notifications.router, prefix="/api/v1")
+    app.include_router(payments.router, prefix="/api/v1")
     app.include_router(dashboard.router, prefix="/api/v1")
     return app
 
