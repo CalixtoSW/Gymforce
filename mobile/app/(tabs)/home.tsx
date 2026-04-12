@@ -20,6 +20,7 @@ import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
 import type {
+  Assessment,
   BadgeListResponse,
   GamificationSummary,
   PointEvent,
@@ -76,6 +77,18 @@ export default function HomeScreen() {
     staleTime: 30_000,
   });
 
+  const myChallengesQuery = useQuery({
+    queryKey: ['my-challenges-home'],
+    queryFn: () => api.get('/challenges/my').then((r) => r.data as unknown[]),
+    staleTime: 30_000,
+  });
+
+  const assessmentQuery = useQuery({
+    queryKey: ['assessment-home'],
+    queryFn: () => api.get<Assessment[]>('/assessments/history').then((r) => r.data),
+    staleTime: 30_000,
+  });
+
   const summary = summaryQuery.data;
   const qrData = qrQuery.data;
   const sheet = sheetsQuery.data?.[0] ?? null;
@@ -84,6 +97,8 @@ export default function HomeScreen() {
   const refetchQr = qrQuery.refetch;
   const refetchSheets = sheetsQuery.refetch;
   const refetchBadges = badgesQuery.refetch;
+  const refetchChallenges = myChallengesQuery.refetch;
+  const refetchAssessments = assessmentQuery.refetch;
 
   useEffect(() => {
     if (qrData) {
@@ -112,8 +127,12 @@ export default function HomeScreen() {
       refetchQr();
       refetchSheets();
       refetchBadges();
+      refetchChallenges();
+      refetchAssessments();
     }, [
+      refetchAssessments,
       refetchBadges,
+      refetchChallenges,
       refetchHistory,
       refetchQr,
       refetchSheets,
@@ -132,6 +151,8 @@ export default function HomeScreen() {
         queryClient.invalidateQueries({ queryKey: ['checkin-qr'] }),
         queryClient.invalidateQueries({ queryKey: ['workout-sheets'] }),
         queryClient.invalidateQueries({ queryKey: ['badges-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-challenges-home'] }),
+        queryClient.invalidateQueries({ queryKey: ['assessment-home'] }),
       ]);
     } finally {
       setRefreshing(false);
@@ -145,7 +166,9 @@ export default function HomeScreen() {
     historyQuery.isLoading ||
     qrQuery.isLoading ||
     sheetsQuery.isLoading ||
-    badgesQuery.isLoading
+    badgesQuery.isLoading ||
+    myChallengesQuery.isLoading ||
+    assessmentQuery.isLoading
   ) {
     return (
       <View style={styles.centeredContainer}>
@@ -160,6 +183,18 @@ export default function HomeScreen() {
     currentStreak > 0 && summary?.streak.last_activity_date !== today;
   const badgesEarned = badgesQuery.data?.total_earned ?? 0;
   const badgesAvailable = badgesQuery.data?.total_available ?? 0;
+  const myChallengesCount = (myChallengesQuery.data ?? []).filter(
+    (item: unknown) => !(item as { completed?: boolean }).completed,
+  ).length;
+  const latestAssessment = assessmentQuery.data?.[0] ?? null;
+  const latestWeightValue =
+    latestAssessment?.weight_kg !== null && latestAssessment?.weight_kg !== undefined
+      ? Number(latestAssessment.weight_kg)
+      : null;
+  const latestWeightLabel =
+    latestWeightValue !== null && Number.isFinite(latestWeightValue)
+      ? `${latestWeightValue.toFixed(1)} kg`
+      : 'Sem dados';
 
   return (
     <ScrollView
@@ -212,6 +247,18 @@ export default function HomeScreen() {
         </View>
         <Text style={styles.badgesArrow}>▶</Text>
       </Pressable>
+
+      <View style={styles.quickCardsRow}>
+        <Pressable onPress={() => router.push('/challenges')} style={styles.quickCard}>
+          <Text style={styles.quickCardTitle}>🎯 Desafios</Text>
+          <Text style={styles.quickCardValue}>{myChallengesCount} ativos</Text>
+        </Pressable>
+
+        <Pressable onPress={() => router.push('/assessment')} style={styles.quickCard}>
+          <Text style={styles.quickCardTitle}>📊 Avaliação</Text>
+          <Text style={styles.quickCardValue}>{latestWeightLabel}</Text>
+        </Pressable>
+      </View>
 
       <View style={styles.qrCard}>
         <View style={styles.qrBox}>
@@ -344,6 +391,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: SPACING.sm,
     padding: SPACING.lg,
+  },
+  quickCard: {
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    flex: 1,
+    padding: SPACING.md,
+  },
+  quickCardsRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  quickCardTitle: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.sm,
+  },
+  quickCardValue: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+    marginTop: SPACING.xs,
   },
   secondaryText: {
     color: COLORS.textSecondary,

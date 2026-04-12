@@ -196,3 +196,65 @@ export type PlanWithDiscount = {
   final_price_with_discount: number;
   user_points: number;
 };
+
+export type Assessment = {
+  id: string;
+  user_id: string;
+  assessed_by: string;
+  assessment_date: string;
+  weight_kg: number | null;
+  height_cm: number | null;
+  body_fat_pct: number | null;
+  muscle_mass_kg: number | null;
+  bmi: number | null;
+  chest_cm: number | null;
+  waist_cm: number | null;
+  hips_cm: number | null;
+  right_arm_cm: number | null;
+  left_arm_cm: number | null;
+  right_thigh_cm: number | null;
+  left_thigh_cm: number | null;
+  right_calf_cm: number | null;
+  left_calf_cm: number | null;
+  notes: string | null;
+};
+
+export type AssessmentEvolution = {
+  metric: string;
+  previous: number | null;
+  current: number | null;
+  change: number | null;
+  change_pct: number | null;
+};
+
+export type ChallengeGoalType = 'checkins' | 'workouts' | 'points' | 'streak';
+
+export type Challenge = {
+  id: string;
+  title: string;
+  description: string | null;
+  goal_type: ChallengeGoalType;
+  goal_value: number;
+  reward_points: number;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  icon: string;
+  total_participants: number;
+};
+
+export type UserChallenge = {
+  id: string;
+  challenge: Challenge;
+  progress: number;
+  completed: boolean;
+  completed_at: string | null;
+  progress_pct: number;
+};
+
+export type ReferralStats = {
+  referral_code: string;
+  total_referred: number;
+  total_activated: number;
+  points_earned: number;
+};

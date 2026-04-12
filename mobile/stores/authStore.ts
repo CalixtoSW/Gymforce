@@ -47,7 +47,12 @@ type AuthState = {
   isLoading: boolean;
 
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    referralCode?: string,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
   fetchMe: () => Promise<void>;
@@ -67,8 +72,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await get().fetchMe();
   },
 
-  register: async (name, email, password) => {
-    const { data } = await api.post('/auth/register', { name, email, password });
+  register: async (name, email, password, referralCode) => {
+    const payload: Record<string, string> = { name, email, password };
+    if (referralCode && referralCode.trim().length > 0) {
+      payload.referral_code = referralCode.trim();
+    }
+    const { data } = await api.post('/auth/register', payload);
     await setToken('access_token', data.access_token);
     await setToken('refresh_token', data.refresh_token);
     api.defaults.headers.common.Authorization = `Bearer ${data.access_token}`;
