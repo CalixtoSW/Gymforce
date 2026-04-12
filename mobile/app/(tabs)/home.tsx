@@ -35,6 +35,18 @@ function formatCountdown(totalSeconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function extractArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+
+  if (value && typeof value === 'object' && Array.isArray((value as { items?: unknown[] }).items)) {
+    return (value as { items: T[] }).items;
+  }
+
+  return [];
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -79,7 +91,7 @@ export default function HomeScreen() {
 
   const myChallengesQuery = useQuery({
     queryKey: ['my-challenges-home'],
-    queryFn: () => api.get('/challenges/my').then((r) => r.data as unknown[]),
+    queryFn: () => api.get('/challenges/my').then((r) => r.data),
     staleTime: 30_000,
   });
 
@@ -91,7 +103,10 @@ export default function HomeScreen() {
 
   const summary = summaryQuery.data;
   const qrData = qrQuery.data;
-  const sheet = sheetsQuery.data?.[0] ?? null;
+  const historyEvents = extractArray<PointEvent>(historyQuery.data);
+  const sheets = extractArray<WorkoutSheet>(sheetsQuery.data);
+  const assessments = extractArray<Assessment>(assessmentQuery.data);
+  const sheet = sheets[0] ?? null;
   const refetchSummary = summaryQuery.refetch;
   const refetchHistory = historyQuery.refetch;
   const refetchQr = qrQuery.refetch;
@@ -178,15 +193,16 @@ export default function HomeScreen() {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const currentStreak = summary?.streak.current_streak ?? 0;
+  const currentStreak = summary?.streak?.current_streak ?? 0;
   const isStreakAtRisk =
-    currentStreak > 0 && summary?.streak.last_activity_date !== today;
+    currentStreak > 0 && summary?.streak?.last_activity_date !== today;
   const badgesEarned = badgesQuery.data?.total_earned ?? 0;
   const badgesAvailable = badgesQuery.data?.total_available ?? 0;
-  const myChallengesCount = (myChallengesQuery.data ?? []).filter(
+  const myChallengesData = extractArray<unknown>(myChallengesQuery.data);
+  const myChallengesCount = myChallengesData.filter(
     (item: unknown) => !(item as { completed?: boolean }).completed,
   ).length;
-  const latestAssessment = assessmentQuery.data?.[0] ?? null;
+  const latestAssessment = assessments[0] ?? null;
   const latestWeightValue =
     latestAssessment?.weight_kg !== null && latestAssessment?.weight_kg !== undefined
       ? Number(latestAssessment.weight_kg)
@@ -211,14 +227,14 @@ export default function HomeScreen() {
       {isStreakAtRisk && (
         <StreakRiskAlert
           streakCount={currentStreak}
-          freezeAvailable={summary?.streak.freeze_available ?? false}
+          freezeAvailable={summary?.streak?.freeze_available ?? false}
         />
       )}
 
       <View style={styles.metricsRow}>
         <StatCard
           icon="🔥"
-          value={summary?.streak.current_streak ?? user?.streak_count ?? 0}
+          value={summary?.streak?.current_streak ?? user?.streak_count ?? 0}
           label="streak"
           color={COLORS.streak}
         />
@@ -289,7 +305,7 @@ export default function HomeScreen() {
         {sheet ? (
           <>
             <Text style={styles.workoutSubtitle}>
-              {sheet.name} - {sheet.exercises.length} exercicios
+              {sheet.name} - {sheet.exercises?.length ?? 0} exercicios
             </Text>
             <Pressable
               onPress={() => router.push(`/workout/${sheet.id}`)}
@@ -305,7 +321,7 @@ export default function HomeScreen() {
         )}
       </View>
 
-      <PointsHistory events={historyQuery.data ?? []} />
+      <PointsHistory events={historyEvents} />
     </ScrollView>
   );
 }

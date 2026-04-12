@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
 
 type Point = {
   date: string;
@@ -10,8 +11,6 @@ type EvolutionChartProps = {
   label: string;
   color: string;
 };
-
-import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
 
 function formatDate(date: string): string {
   const parsed = new Date(date);
