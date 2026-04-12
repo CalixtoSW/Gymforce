@@ -136,3 +136,63 @@ export type BadgeListResponse = {
   total_earned: number;
   total_available: number;
 };
+
+export type PaymentStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
+  | 'refunded'
+  | 'expired';
+
+export type PixPayment = {
+  payment_id: string;
+  plan_name: string;
+  amount: number;
+  discount_points: number;
+  discount_amount: number;
+  final_amount: number;
+  qr_code: string;
+  qr_code_base64: string;
+  ticket_url: string | null;
+  expires_at: string | null;
+  status: PaymentStatus;
+};
+
+export type PaymentHistory = {
+  id: string;
+  plan_id: string;
+  amount: number;
+  discount_points: number;
+  discount_amount: number;
+  final_amount: number;
+  method: string;
+  status: PaymentStatus;
+  mp_payment_id: string | null;
+  paid_at: string | null;
+  created_at: string;
+};
+
+export type MembershipInfo = {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  payment_status: string;
+  plan_name: string | null;
+  days_remaining: number | null;
+};
+
+export type PlanWithDiscount = {
+  id: string;
+  name: string;
+  duration_days: number;
+  price: number;
+  description: string | null;
+  discount_available: number;
+  discount_points: number;
+  final_price_with_discount: number;
+  user_points: number;
+};
