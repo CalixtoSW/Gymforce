@@ -187,6 +187,14 @@ export default function HomeScreen() {
     (item: unknown) => !(item as { completed?: boolean }).completed,
   ).length;
   const latestAssessment = assessmentQuery.data?.[0] ?? null;
+  const latestWeightValue =
+    latestAssessment?.weight_kg !== null && latestAssessment?.weight_kg !== undefined
+      ? Number(latestAssessment.weight_kg)
+      : null;
+  const latestWeightLabel =
+    latestWeightValue !== null && Number.isFinite(latestWeightValue)
+      ? `${latestWeightValue.toFixed(1)} kg`
+      : 'Sem dados';
 
   return (
     <ScrollView
@@ -248,9 +256,7 @@ export default function HomeScreen() {
 
         <Pressable onPress={() => router.push('/assessment')} style={styles.quickCard}>
           <Text style={styles.quickCardTitle}>📊 Avaliação</Text>
-          <Text style={styles.quickCardValue}>
-            {latestAssessment?.weight_kg ? `${latestAssessment.weight_kg.toFixed(1)} kg` : 'Sem dados'}
-          </Text>
+          <Text style={styles.quickCardValue}>{latestWeightLabel}</Text>
         </Pressable>
       </View>
 
