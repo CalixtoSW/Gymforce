@@ -7,6 +7,7 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., min_length=8, max_length=128)
     cpf: str | None = Field(None, pattern=r"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$")
     phone: str | None = None
+    referral_code: str | None = None
 
 
 class LoginRequest(BaseModel):

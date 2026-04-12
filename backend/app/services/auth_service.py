@@ -12,6 +12,7 @@ from app.core.security import (
 from app.models.user import User
 from app.repositories.user_repo import UserRepository
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.services.referral_service import ReferralService
 
 
 class AuthService:
@@ -34,6 +35,14 @@ class AuthService:
             phone=data.phone,
         )
         user = await self.repo.create(user)
+
+        if data.referral_code:
+            referral_service = ReferralService(self.repo.db)
+            await referral_service.process_registration(
+                data.referral_code,
+                user.id,
+                user.email,
+            )
 
         return TokenResponse(
             access_token=create_access_token(user.id, user.role.value),

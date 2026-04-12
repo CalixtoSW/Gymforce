@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import HTTPException, status
 from jose import JWTError
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis
@@ -12,7 +12,9 @@ from app.models.membership import Membership, MembershipStatus
 from app.models.point_event import PointActionType
 from app.repositories.checkin_repo import CheckinRepository
 from app.services.badge_service import BadgeService
+from app.services.challenge_service import ChallengeService
 from app.services.gamification_service import GamificationService
+from app.services.referral_service import ReferralService
 
 CHECKIN_POINTS = 10
 
@@ -83,5 +85,14 @@ class CheckinService:
         await gamification.update_streak(user_id)
         badge_service = BadgeService(self.db)
         await badge_service.evaluate(user_id)
+        challenge_service = ChallengeService(self.db)
+        await challenge_service.update_progress_for_user(user_id)
+
+        count_result = await self.db.execute(
+            select(func.count(Checkin.id)).where(Checkin.user_id == user_id)
+        )
+        if count_result.scalar_one() == 1:
+            referral_service = ReferralService(self.db)
+            await referral_service.process_first_checkin(user_id)
 
         return checkin

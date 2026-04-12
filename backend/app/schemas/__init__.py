@@ -1,3 +1,8 @@
+from app.schemas.assessment import (
+    AssessmentCreate,
+    AssessmentEvolution,
+    AssessmentResponse,
+)
 from app.schemas.auth import (
     LoginRequest,
     MessageResponse,
@@ -6,6 +11,12 @@ from app.schemas.auth import (
     TokenResponse,
 )
 from app.schemas.badge import BadgeListResponse, BadgeResponse
+from app.schemas.challenge import (
+    ChallengeCreate,
+    ChallengeResponse,
+    ReferralResponse,
+    UserChallengeResponse,
+)
 from app.schemas.checkin import CheckinQRPayload, CheckinResponse, QRCodeResponse
 from app.schemas.dashboard import CheckinsByDay, CheckinsByHour, DashboardKPIs
 from app.schemas.gamification import (
@@ -57,6 +68,13 @@ __all__ = [
     "LeaderboardEntry",
     "LeaderboardResponse",
     "GamificationSummary",
+    "AssessmentCreate",
+    "AssessmentResponse",
+    "AssessmentEvolution",
+    "ChallengeCreate",
+    "ChallengeResponse",
+    "UserChallengeResponse",
+    "ReferralResponse",
     "LoginRequest",
     "MessageResponse",
     "RefreshRequest",
