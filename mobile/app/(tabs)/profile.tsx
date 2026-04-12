@@ -46,6 +46,9 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.menuCard}>
+        <Pressable onPress={() => router.push('/badges')} style={styles.menuAction}>
+          <Text style={styles.menuItem}>Conquistas ▶</Text>
+        </Pressable>
         <Text style={styles.menuItem}>Editar Perfil - Em breve</Text>
         <Text style={styles.menuItem}>Notificacoes - Em breve</Text>
         <Text style={styles.menuItem}>Sobre o App - Em breve</Text>
@@ -107,6 +110,9 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     padding: SPACING.md,
     width: '100%',
+  },
+  menuAction: {
+    paddingVertical: SPACING.xs,
   },
   menuItem: {
     color: COLORS.textSecondary,
