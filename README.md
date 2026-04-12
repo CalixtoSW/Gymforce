@@ -37,6 +37,18 @@ docker compose ps
 # gymforce-redis → running (6379)
 ```
 
+## 🖥️ Admin Web
+
+```bash
+cd admin
+npm install
+cp .env.local.example .env.local
+# Editar NEXT_PUBLIC_API_URL se necessário
+npm run dev
+# Acesse http://localhost:3000
+# Login: admin@gymforce.app / Teste@123
+```
+
 ## 📊 Stack Resumida
 
 | Camada | Tech |

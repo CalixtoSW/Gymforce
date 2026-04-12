@@ -1,46 +1,47 @@
-# GymForce v0.1.0-mvp - Release Notes
+# GymForce v1.0.0 — Release Notes
 
-Data: 2026-04-11
-Tipo: Beta Fechado
-Status: QA Interno
+**Data:** 2026-04-12
+**Tipo:** Release Estável
+**Status:** Produção
 
-## O que esta pronto
+## Stack
 
-### Para o Aluno
-- Cadastro e login (email/senha)
-- QR Code para check-in na recepcao (auto-refresh 5min)
-- Visualizar fichas de treino montadas pelo personal
-- Executar treino com timer de descanso por exercicio
-- Concluir treino e ganhar pontos (+25/treino)
-- Ganhar pontos por check-in (+10/dia)
-- Streaks de dias consecutivos (com freeze 1x/mes)
-- Bonus de streak (7 dias = +100, 30 dias = +500)
-- Subir de tier automaticamente (Bronze -> Prata -> Ouro -> Diamante -> Lenda)
-- Ranking mensal (leaderboard)
-- Loja de recompensas (trocar pontos por premios)
-- Historico de resgates
+| Camada | Tech |
+|--------|------|
+| Mobile | React Native + Expo SDK 54 + TypeScript |
+| Backend | FastAPI + Python 3.12 + PostgreSQL 16 + Redis 7 |
+| Admin Web | Next.js 15 + Tailwind CSS 4 + Recharts |
+| Auth | JWT (access + refresh tokens) |
 
-### Para o Admin
-- Dashboard com KPIs (via API/Swagger)
-- CRUD de usuarios com roles
-- CRUD de recompensas
-- Gerenciar resgates (entregar/cancelar)
-- Criar planos de mensalidade
-- Dados de check-in por hora e dia da semana
+## Funcionalidades Completas
 
-### Para o Personal
-- Criar fichas de treino para alunos
+### Mobile (Aluno)
+- Cadastro/login com email/senha + código de indicação
+- QR Code para check-in (auto-refresh 5min)
+- Fichas de treino com timer de descanso
+- Gamificação: pontos, streaks com freeze, tiers, leaderboard
+- 10 badges desbloqueáveis automaticamente
+- Loja de recompensas com troca de pontos
+- Pagamento PIX via Mercado Pago com desconto por pontos
+- Avaliação física com gráficos de evolução
+- Desafios semanais/mensais com progresso automático
+- Indicação de amigos com bônus duplo
+- Push notifications
 
-## O que nao esta pronto (pos-beta)
-- Login social (Google/Apple)
-- Notificacoes push
-- Badges/conquistas
-- Desafios semanais
-- Pagamento integrado (PIX/cartao)
-- Avaliacao fisica
-- Painel admin web
-- Upload de fotos
-- Modo offline
+### Admin Web
+- Dashboard com 6 KPIs + gráficos de check-in
+- CRUD de alunos com exportação CSV
+- CRUD de planos, recompensas, desafios
+- Gestão de resgates (entregar/cancelar)
+- Criação de fichas de treino
+- Registro de avaliação física
+- Envio de push notifications
+- Expiração de matrículas vencidas
 
-## Bugs conhecidos
-- Nenhum reportado ate o momento (beta inicial)
+### Backend
+- 17 models, 15 routers, 12 services
+- JWT com refresh automático
+- Redis para leaderboard (fallback PostgreSQL)
+- Mercado Pago PIX integration
+- Event sourcing para pontos
+- ~3.000 linhas de testes
