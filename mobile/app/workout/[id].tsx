@@ -30,6 +30,7 @@ export default function WorkoutDetailScreen() {
   const [sheet, setSheet] = useState<WorkoutSheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [startingGuided, setStartingGuided] = useState(false);
+  const [guidedError, setGuidedError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
@@ -104,10 +105,15 @@ export default function WorkoutDetailScreen() {
       return;
     }
 
+    setGuidedError(null);
     setStartingGuided(true);
     try {
       await startSession(sheet.id);
       router.replace('/session/active');
+    } catch {
+      setGuidedError(
+        'Nao foi possivel abrir a sessao guiada agora. Continue no modo compatibilidade.',
+      );
     } finally {
       setStartingGuided(false);
     }
@@ -172,6 +178,7 @@ export default function WorkoutDetailScreen() {
               <Text style={styles.warningButtonText}>Abrir Sessao Guiada</Text>
             )}
           </Pressable>
+          {guidedError ? <Text style={styles.warningError}>{guidedError}</Text> : null}
         </View>
 
         <Text style={styles.title}>{sheet.name}</Text>
@@ -326,5 +333,10 @@ const styles = StyleSheet.create({
     color: COLORS.warning,
     fontSize: FONT_SIZE.md,
     fontWeight: '700',
+  },
+  warningError: {
+    color: COLORS.error,
+    fontSize: FONT_SIZE.sm,
+    marginTop: SPACING.sm,
   },
 });
