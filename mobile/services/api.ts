@@ -10,7 +10,11 @@ function resolveApiBaseUrl(): string {
 
   if (__DEV__) {
     if (isBrowser) {
-      return `${window.location.protocol}//${window.location.hostname}:8001/api/v1`;
+      const host =
+        window.location.hostname === 'localhost'
+          ? '127.0.0.1'
+          : window.location.hostname;
+      return `${window.location.protocol}//${host}:8001/api/v1`;
     }
     return 'http://localhost:8001/api/v1';
   }
