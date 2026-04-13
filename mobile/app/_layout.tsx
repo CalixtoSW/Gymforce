@@ -22,10 +22,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     const init = async () => {
-      await loadSession();
-      const state = useAuthStore.getState();
-      if (state.isAuthenticated) {
-        await registerForPushNotifications();
+      try {
+        await loadSession();
+        const state = useAuthStore.getState();
+        if (state.isAuthenticated) {
+          await registerForPushNotifications();
+        }
+      } catch (error) {
+        console.error('Falha ao inicializar sessao/notificacoes', error);
       }
     };
 

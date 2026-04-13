@@ -117,6 +117,9 @@ export default function HomeScreen() {
   const refetchBadges = badgesQuery.refetch;
   const refetchChallenges = myChallengesQuery.refetch;
   const refetchAssessments = assessmentQuery.refetch;
+  const safeCall = useCallback((fn: () => Promise<unknown>) => {
+    fn().catch(() => null);
+  }, []);
 
   useEffect(() => {
     if (qrData) {
@@ -133,21 +136,21 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (secondsLeft === 60) {
-      refetchQr();
+      safeCall(refetchQr);
     }
-  }, [refetchQr, secondsLeft]);
+  }, [refetchQr, safeCall, secondsLeft]);
 
   useFocusEffect(
     useCallback(() => {
-      refreshUser();
-      refetchSummary();
-      refetchHistory();
-      refetchQr();
-      refetchSheets();
-      refetchBadges();
-      refetchChallenges();
-      refetchAssessments();
-      loadActiveSession();
+      safeCall(refreshUser);
+      safeCall(refetchSummary);
+      safeCall(refetchHistory);
+      safeCall(refetchQr);
+      safeCall(refetchSheets);
+      safeCall(refetchBadges);
+      safeCall(refetchChallenges);
+      safeCall(refetchAssessments);
+      safeCall(loadActiveSession);
     }, [
       loadActiveSession,
       refetchAssessments,
@@ -158,6 +161,7 @@ export default function HomeScreen() {
       refetchSheets,
       refetchSummary,
       refreshUser,
+      safeCall,
     ]),
   );
 

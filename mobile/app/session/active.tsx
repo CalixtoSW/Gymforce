@@ -86,7 +86,7 @@ export default function ActiveSessionScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadActiveSession();
+      loadActiveSession().catch(() => null);
     }, [loadActiveSession]),
   );
 
