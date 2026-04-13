@@ -19,12 +19,14 @@ import { TierBadge } from '@/components/features/TierBadge';
 import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
+import { useSessionStore } from '@/stores/sessionStore';
 import type {
   Assessment,
   BadgeListResponse,
   GamificationSummary,
   PointEvent,
   QRCodeData,
+  SessionDetail,
   WorkoutSheet,
 } from '@/types';
 
@@ -52,6 +54,7 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const refreshUser = useAuthStore((state) => state.refreshUser);
+  const { session, loadActiveSession, startSession } = useSessionStore();
 
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -114,6 +117,9 @@ export default function HomeScreen() {
   const refetchBadges = badgesQuery.refetch;
   const refetchChallenges = myChallengesQuery.refetch;
   const refetchAssessments = assessmentQuery.refetch;
+  const safeCall = useCallback((fn: () => Promise<unknown>) => {
+    fn().catch(() => null);
+  }, []);
 
   useEffect(() => {
     if (qrData) {
@@ -130,21 +136,23 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (secondsLeft === 60) {
-      refetchQr();
+      safeCall(refetchQr);
     }
-  }, [refetchQr, secondsLeft]);
+  }, [refetchQr, safeCall, secondsLeft]);
 
   useFocusEffect(
     useCallback(() => {
-      refreshUser();
-      refetchSummary();
-      refetchHistory();
-      refetchQr();
-      refetchSheets();
-      refetchBadges();
-      refetchChallenges();
-      refetchAssessments();
+      safeCall(refreshUser);
+      safeCall(refetchSummary);
+      safeCall(refetchHistory);
+      safeCall(refetchQr);
+      safeCall(refetchSheets);
+      safeCall(refetchBadges);
+      safeCall(refetchChallenges);
+      safeCall(refetchAssessments);
+      safeCall(loadActiveSession);
     }, [
+      loadActiveSession,
       refetchAssessments,
       refetchBadges,
       refetchChallenges,
@@ -153,6 +161,7 @@ export default function HomeScreen() {
       refetchSheets,
       refetchSummary,
       refreshUser,
+      safeCall,
     ]),
   );
 
@@ -169,12 +178,32 @@ export default function HomeScreen() {
         queryClient.invalidateQueries({ queryKey: ['my-challenges-home'] }),
         queryClient.invalidateQueries({ queryKey: ['assessment-home'] }),
       ]);
+      await loadActiveSession();
     } finally {
       setRefreshing(false);
     }
-  }, [queryClient, refreshUser]);
+  }, [loadActiveSession, queryClient, refreshUser]);
 
   const greetingName = useMemo(() => user?.name?.split(' ')[0] ?? 'Aluno', [user?.name]);
+  const activeSession = useMemo<SessionDetail | null>(() => {
+    if (!session) {
+      return null;
+    }
+    return session.status === 'active' || session.status === 'paused' ? session : null;
+  }, [session]);
+
+  const activeDurationLabel = useMemo(() => {
+    if (!activeSession) {
+      return '0 min';
+    }
+    const started = new Date(activeSession.started_at).getTime();
+    const now = Date.now();
+    const elapsedSeconds = Math.max(
+      0,
+      Math.floor((now - started) / 1000) - (activeSession.total_pause_seconds ?? 0),
+    );
+    return `${Math.max(1, Math.round(elapsedSeconds / 60))} min`;
+  }, [activeSession]);
 
   if (
     summaryQuery.isLoading ||
@@ -218,6 +247,22 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <Text style={styles.greeting}>Ola, {greetingName}! 👋</Text>
+
+      {activeSession ? (
+        <View style={styles.activeSessionCard}>
+          <Text style={styles.activeSessionTitle}>🏋️ TREINO EM ANDAMENTO</Text>
+          <Text style={styles.activeSessionSubtitle}>
+            {activeSession.sheet_name} - {activeSession.completion_pct}% concluido
+          </Text>
+          <Text style={styles.activeSessionSubtitle}>⏱ {activeDurationLabel}</Text>
+          <Pressable
+            onPress={() => router.push('/session/active')}
+            style={styles.activeSessionButton}
+          >
+            <Text style={styles.activeSessionButtonText}>Continuar Treino</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       <TierBadge
         tier={summary?.tier ?? user?.tier ?? 'bronze'}
@@ -308,7 +353,14 @@ export default function HomeScreen() {
               {sheet.name} - {sheet.exercises?.length ?? 0} exercicios
             </Text>
             <Pressable
-              onPress={() => router.push(`/workout/${sheet.id}`)}
+              onPress={async () => {
+                try {
+                  await startSession(sheet.id);
+                  router.push('/session/active');
+                } catch {
+                  router.push(`/workout/${sheet.id}`);
+                }
+              }}
               style={styles.successButton}
             >
               <Text style={styles.primaryButtonText}>Iniciar Treino</Text>
@@ -327,6 +379,36 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  activeSessionButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    justifyContent: 'center',
+    marginTop: SPACING.sm,
+    minHeight: 44,
+  },
+  activeSessionButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+  },
+  activeSessionCard: {
+    backgroundColor: COLORS.surfaceLight,
+    borderColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    gap: SPACING.xs,
+    padding: SPACING.md,
+  },
+  activeSessionSubtitle: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.sm,
+  },
+  activeSessionTitle: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '800',
+  },
   badgesArrow: {
     color: COLORS.textSecondary,
     fontSize: FONT_SIZE.md,

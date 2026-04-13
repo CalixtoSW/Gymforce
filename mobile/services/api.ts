@@ -1,11 +1,28 @@
 import * as SecureStore from 'expo-secure-store';
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ??
-  (__DEV__ ? 'http://localhost:8001/api/v1' : 'https://api.gymforce.app/api/v1');
-
 const isBrowser = typeof window !== 'undefined';
+
+function resolveApiBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+
+  if (__DEV__) {
+    if (isBrowser) {
+      const host =
+        window.location.hostname === 'localhost'
+          ? '127.0.0.1'
+          : window.location.hostname;
+      return `${window.location.protocol}//${host}:8001/api/v1`;
+    }
+    return 'http://localhost:8001/api/v1';
+  }
+
+  return 'https://api.gymforce.app/api/v1';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 function getStorageKey(key: string): string {
   return `gymforce_${key}`;

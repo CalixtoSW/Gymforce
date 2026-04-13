@@ -18,19 +18,24 @@ import {
 } from '@/constants/theme';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
+import { useSessionStore } from '@/stores/sessionStore';
 import type { Exercise, WorkoutSheet } from '@/types';
 
 export default function WorkoutDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const refreshUser = useAuthStore((state) => state.refreshUser);
+  const { loadActiveSession, startSession } = useSessionStore();
 
   const [sheet, setSheet] = useState<WorkoutSheet | null>(null);
   const [loading, setLoading] = useState(true);
+  const [startingGuided, setStartingGuided] = useState(false);
+  const [guidedError, setGuidedError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
   const [timerVisible, setTimerVisible] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
   const startedAtRef = useRef<number>(Date.now());
 
   const loadSheet = useCallback(async () => {
@@ -40,25 +45,78 @@ export default function WorkoutDetailScreen() {
 
     setLoading(true);
     try {
+      await loadActiveSession().catch(() => null);
+      const activeSession = useSessionStore.getState().session;
+      if (activeSession && (activeSession.status === 'active' || activeSession.status === 'paused')) {
+        router.replace('/session/active');
+        return;
+      }
+
+      try {
+        await startSession(id);
+        router.replace('/session/active');
+        return;
+      } catch {
+        // Fallback legado quando a API de sessões não está disponível.
+      }
+
       const { data } = await api.get<WorkoutSheet>(`/workouts/sheets/${id}`);
       setSheet(data);
       startedAtRef.current = Date.now();
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, loadActiveSession, router, startSession]);
 
   useEffect(() => {
     loadSheet();
   }, [loadSheet]);
 
+  useEffect(() => {
+    if (!timerVisible || timerSeconds <= 0) {
+      return;
+    }
+
+    const id = setInterval(() => {
+      setTimerSeconds((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, [timerSeconds, timerVisible]);
+
+  useEffect(() => {
+    if (timerVisible && timerSeconds === 0) {
+      setTimerVisible(false);
+    }
+  }, [timerSeconds, timerVisible]);
+
   const openTimer = (exercise: Exercise) => {
     setActiveExercise(exercise);
+    setTimerSeconds(exercise.rest_seconds);
     setTimerVisible(true);
   };
 
   const closeTimer = () => {
     setTimerVisible(false);
+  };
+
+  const openGuidedSession = async () => {
+    if (!sheet) {
+      return;
+    }
+
+    setGuidedError(null);
+    setStartingGuided(true);
+    try {
+      await startSession(sheet.id);
+      router.replace('/session/active');
+    } catch {
+      setGuidedError(
+        'Nao foi possivel abrir a sessao guiada agora. Continue no modo compatibilidade.',
+      );
+    } finally {
+      setStartingGuided(false);
+    }
   };
 
   const concludeWorkout = async () => {
@@ -107,6 +165,22 @@ export default function WorkoutDetailScreen() {
   return (
     <View style={styles.page}>
       <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.warningCard}>
+          <Text style={styles.warningTitle}>Modo compatibilidade</Text>
+          <Text style={styles.warningText}>
+            Ciclo completo (serie feita, pular/falhou, descanso automatico, pausa e conclusao parcial)
+            fica na Sessao Guiada.
+          </Text>
+          <Pressable onPress={openGuidedSession} style={styles.warningButton}>
+            {startingGuided ? (
+              <ActivityIndicator color={COLORS.textPrimary} />
+            ) : (
+              <Text style={styles.warningButtonText}>Abrir Sessao Guiada</Text>
+            )}
+          </Pressable>
+          {guidedError ? <Text style={styles.warningError}>{guidedError}</Text> : null}
+        </View>
+
         <Text style={styles.title}>{sheet.name}</Text>
 
         {sheet.exercises.map((exercise, index) => (
@@ -143,9 +217,19 @@ export default function WorkoutDetailScreen() {
 
       <RestTimer
         visible={timerVisible}
-        restSeconds={activeExercise?.rest_seconds ?? 60}
-        exerciseName={activeExercise?.name}
-        onClose={closeTimer}
+        timerSeconds={timerSeconds}
+        onAdd15={() => setTimerSeconds((prev) => prev + 15)}
+        onMinus15={() => setTimerSeconds((prev) => Math.max(0, prev - 15))}
+        onSkip={closeTimer}
+        nextInfo={
+          activeExercise
+            ? {
+                exerciseName: activeExercise.name,
+                setLabel: 'Proxima serie',
+                weightLabel: `${activeExercise.reps} reps`,
+              }
+            : null
+        }
       />
     </View>
   );
@@ -219,5 +303,40 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.xl,
     fontWeight: '700',
+  },
+  warningButton: {
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.md,
+    justifyContent: 'center',
+    marginTop: SPACING.sm,
+    minHeight: 42,
+  },
+  warningButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+  },
+  warningCard: {
+    backgroundColor: COLORS.surfaceLight,
+    borderColor: COLORS.warning,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    padding: SPACING.md,
+  },
+  warningText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.sm,
+    marginTop: SPACING.xs,
+  },
+  warningTitle: {
+    color: COLORS.warning,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+  },
+  warningError: {
+    color: COLORS.error,
+    fontSize: FONT_SIZE.sm,
+    marginTop: SPACING.sm,
   },
 });
