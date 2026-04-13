@@ -91,24 +91,16 @@ export default function WorkoutsScreen() {
           <View key={sheet.id} style={styles.card}>
             <Text style={styles.cardTitle}>💪 {sheet.name}</Text>
             <Text style={styles.secondary}>{sheet.exercises.length} exercicios</Text>
-            <View style={styles.row}>
-              <Pressable
-                onPress={() => handleStart(sheet.id)}
-                style={[styles.startButton, startingSheetId === sheet.id && styles.disabled]}
-              >
-                {startingSheetId === sheet.id ? (
-                  <ActivityIndicator color={COLORS.textPrimary} />
-                ) : (
-                  <Text style={styles.startButtonText}>Iniciar Treino</Text>
-                )}
-              </Pressable>
-              <Pressable
-                onPress={() => router.push(`/workout/${sheet.id}`)}
-                style={styles.openFallbackButton}
-              >
-                <Text style={styles.openFallbackButtonText}>Abrir fallback</Text>
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={() => handleStart(sheet.id)}
+              style={[styles.startButton, startingSheetId === sheet.id && styles.disabled]}
+            >
+              {startingSheetId === sheet.id ? (
+                <ActivityIndicator color={COLORS.textPrimary} />
+              ) : (
+                <Text style={styles.startButtonText}>Iniciar Treino</Text>
+              )}
+            </Pressable>
           </View>
         ))
       )}
@@ -158,20 +150,6 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-  openFallbackButton: {
-    alignItems: 'center',
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    flex: 1,
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  openFallbackButtonText: {
-    color: COLORS.textSecondary,
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
-  },
   resumeButton: {
     alignItems: 'center',
     backgroundColor: COLORS.primary,
@@ -184,11 +162,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.md,
     fontWeight: '700',
   },
-  row: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-  },
   secondary: {
     color: COLORS.textSecondary,
     fontSize: FONT_SIZE.sm,
@@ -197,8 +170,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.success,
     borderRadius: BORDER_RADIUS.md,
-    flex: 1,
     justifyContent: 'center',
+    marginTop: SPACING.sm,
     minHeight: 44,
   },
   startButtonText: {
