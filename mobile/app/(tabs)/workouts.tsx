@@ -51,6 +51,8 @@ export default function WorkoutsScreen() {
     try {
       await startSession(sheetId);
       router.push('/session/active');
+    } catch {
+      router.push(`/workout/${sheetId}`);
     } finally {
       setStartingSheetId(null);
     }
