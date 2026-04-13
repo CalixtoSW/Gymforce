@@ -29,4 +29,4 @@ CMD ["gunicorn", "app.main:app", \
      "--timeout", "120", \
      "--access-logfile", "-", \
      "--error-logfile", "-", \
-     "--proxy-headers"]
+     "--forwarded-allow-ips", "*"]

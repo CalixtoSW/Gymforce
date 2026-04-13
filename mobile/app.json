@@ -3,6 +3,9 @@
     "name": "GymForce",
     "slug": "gymforce",
     "version": "1.0.0",
+    "experiments": {
+      "baseUrl": "/app"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gymforce",
