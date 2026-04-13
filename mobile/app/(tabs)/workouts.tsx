@@ -42,7 +42,7 @@ export default function WorkoutsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadActiveSession();
+      loadActiveSession().catch(() => null);
     }, [loadActiveSession]),
   );
 
