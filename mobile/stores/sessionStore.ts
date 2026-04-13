@@ -1,4 +1,5 @@
 import * as Haptics from 'expo-haptics';
+import { AxiosError } from 'axios';
 import { create } from 'zustand';
 
 import { api } from '@/services/api';
@@ -47,6 +48,13 @@ function inferCurrentExerciseIndex(session: SessionDetail | null): number {
   return nextIndex >= 0 ? nextIndex : session.exercises_progress.length - 1;
 }
 
+function isNotFound(error: unknown): boolean {
+  return (
+    error instanceof AxiosError &&
+    error.response?.status === 404
+  );
+}
+
 export const useSessionStore = create<SessionState>((set, get) => ({
   session: null,
   isLoading: false,
@@ -72,11 +80,19 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   loadActiveSession: async () => {
-    const { data } = await api.get<SessionDetail | null>('/sessions/active');
-    set({
-      session: data,
-      currentExerciseIndex: inferCurrentExerciseIndex(data),
-    });
+    try {
+      const { data } = await api.get<SessionDetail | null>('/sessions/active');
+      set({
+        session: data,
+        currentExerciseIndex: inferCurrentExerciseIndex(data),
+      });
+    } catch (error) {
+      if (isNotFound(error)) {
+        set({ session: null, currentExerciseIndex: 0 });
+        return;
+      }
+      throw error;
+    }
   },
 
   pauseSession: async () => {
