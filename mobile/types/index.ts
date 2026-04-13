@@ -258,3 +258,78 @@ export type ReferralStats = {
   total_activated: number;
   points_earned: number;
 };
+
+export type SessionStatus =
+  | 'active'
+  | 'paused'
+  | 'completed'
+  | 'partial'
+  | 'cancelled';
+export type SetLogStatus = 'completed' | 'skipped' | 'partial' | 'failed';
+
+export type PartialReason =
+  | 'injury'
+  | 'fatigue'
+  | 'time'
+  | 'equipment'
+  | 'unwell'
+  | 'personal'
+  | 'other';
+
+export type SetLogDetail = {
+  id: string;
+  exercise_id: string;
+  set_number: number;
+  planned_reps: string;
+  planned_weight_kg: number | null;
+  actual_reps: number | null;
+  actual_weight_kg: number | null;
+  status: SetLogStatus;
+  rest_seconds_taken: number | null;
+  notes?: string | null;
+  created_at: string;
+};
+
+export type ExerciseProgress = {
+  exercise_id: string;
+  exercise_name: string;
+  planned_sets: number;
+  planned_reps: string;
+  rest_seconds: number;
+  suggested_weight_kg: number | null;
+  sets_completed: number;
+  sets_remaining: number;
+  set_logs: SetLogDetail[];
+};
+
+export type SessionDetail = {
+  id: string;
+  user_id: string;
+  sheet_id: string;
+  sheet_name: string;
+  status: SessionStatus;
+  started_at: string;
+  paused_at: string | null;
+  finished_at: string | null;
+  active_duration_seconds: number | null;
+  total_pause_seconds: number;
+  total_sets_planned: number;
+  total_sets_completed: number;
+  total_sets_skipped: number;
+  completion_pct: number;
+  partial_reason: PartialReason | null;
+  partial_notes: string | null;
+  finished_by: string | null;
+  points_earned: number;
+  exercises_progress: ExerciseProgress[];
+};
+
+export const PARTIAL_REASON_LABELS: Record<PartialReason, string> = {
+  injury: 'Lesao / Dor',
+  fatigue: 'Fadiga / Esgotamento',
+  time: 'Sem tempo',
+  equipment: 'Equipamento ocupado',
+  unwell: 'Mal estar',
+  personal: 'Decisao do personal',
+  other: 'Outro motivo',
+};

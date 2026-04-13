@@ -66,6 +66,8 @@ export default function RootLayout() {
         <Stack.Screen name="assessment" />
         <Stack.Screen name="challenges" />
         <Stack.Screen name="referral" />
+        <Stack.Screen name="session/active" />
+        <Stack.Screen name="session/summary" />
       </Stack>
     </QueryClientProvider>
   );
