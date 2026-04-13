@@ -54,6 +54,16 @@ from app.schemas.workout import (
     WorkoutSheetCreate,
     WorkoutSheetResponse,
 )
+from app.schemas.workout_session import (
+    ActiveSessionSummary,
+    FinishSessionRequest,
+    LogSetRequest,
+    PersonalFinishRequest,
+    SessionExerciseProgress,
+    SessionResponse,
+    SetLogResponse,
+    StartSessionRequest,
+)
 
 __all__ = [
     "HealthResponse",
@@ -101,6 +111,14 @@ __all__ = [
     "WorkoutResponse",
     "WorkoutSheetCreate",
     "WorkoutSheetResponse",
+    "StartSessionRequest",
+    "LogSetRequest",
+    "FinishSessionRequest",
+    "PersonalFinishRequest",
+    "SetLogResponse",
+    "SessionExerciseProgress",
+    "SessionResponse",
+    "ActiveSessionSummary",
     "UserAdminUpdate",
     "UserResponse",
     "UserUpdate",
