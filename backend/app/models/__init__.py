@@ -8,13 +8,20 @@ from app.models.payment import Payment, PaymentMethod, PaymentStatus
 from app.models.plan import Plan
 from app.models.point_event import PointActionType, PointEvent
 from app.models.push_token import PushToken
-from app.models.referral import Referral, ReferralStatus
 from app.models.redemption import Redemption, RedemptionStatus
+from app.models.referral import Referral, ReferralStatus
 from app.models.reward import Reward
 from app.models.streak import UserStreak
 from app.models.user import User
 from app.models.user_badge import UserBadge
 from app.models.workout import Exercise, Workout, WorkoutSheet
+from app.models.workout_session import (
+    PartialReason,
+    SessionStatus,
+    SetLog,
+    SetLogStatus,
+    WorkoutSession,
+)
 
 __all__ = [
     "Base",
@@ -45,4 +52,9 @@ __all__ = [
     "WorkoutSheet",
     "Exercise",
     "Workout",
+    "WorkoutSession",
+    "SessionStatus",
+    "PartialReason",
+    "SetLog",
+    "SetLogStatus",
 ]

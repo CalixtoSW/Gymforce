@@ -54,7 +54,13 @@ async def create_sheet(
     )
 
 
-@router.post("/complete", response_model=WorkoutResponse, status_code=201)
+@router.post(
+    "/complete",
+    response_model=WorkoutResponse,
+    status_code=201,
+    deprecated=True,
+    summary="[DEPRECATED] Use POST /sessions/start + /finish",
+)
 async def complete_workout(
     data: WorkoutComplete,
     user: Annotated[User, Depends(get_current_user)],

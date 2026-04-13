@@ -7,8 +7,8 @@ from app.api.v1 import (
     assessments,
     auth,
     badges,
-    checkins,
     challenges,
+    checkins,
     dashboard,
     gamification,
     health,
@@ -17,6 +17,7 @@ from app.api.v1 import (
     plans,
     referrals,
     rewards,
+    sessions,
     users,
     workouts,
 )
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(notifications.router, prefix="/api/v1")
     app.include_router(payments.router, prefix="/api/v1")
     app.include_router(dashboard.router, prefix="/api/v1")
+    app.include_router(sessions.router, prefix="/api/v1")
     return app
 
 
