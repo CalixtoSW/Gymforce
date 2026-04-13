@@ -1,24 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import {
-  BORDER_RADIUS,
-  COLORS,
-  FONT_SIZE,
-  SPACING,
-} from '@/constants/theme';
+import { BORDER_RADIUS, COLORS, FONT_SIZE, SPACING } from '@/constants/theme';
+
+type NextInfo = {
+  exerciseName: string;
+  setLabel: string;
+  weightLabel: string;
+};
 
 type RestTimerProps = {
   visible: boolean;
-  restSeconds: number;
-  exerciseName?: string;
-  onClose: () => void;
+  timerSeconds: number;
+  onAdd15: () => void;
+  onMinus15: () => void;
+  onSkip: () => void;
+  nextInfo?: NextInfo | null;
 };
 
 function formatTime(seconds: number): string {
@@ -32,74 +28,43 @@ function formatTime(seconds: number): string {
 
 export function RestTimer({
   visible,
-  restSeconds,
-  exerciseName,
-  onClose,
+  timerSeconds,
+  onAdd15,
+  onMinus15,
+  onSkip,
+  nextInfo,
 }: RestTimerProps) {
-  const [remaining, setRemaining] = useState(restSeconds);
-
-  useEffect(() => {
-    if (visible) {
-      setRemaining(restSeconds);
-    }
-  }, [restSeconds, visible]);
-
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    if (remaining <= 0) {
-      onClose();
-      return;
-    }
-
-    const id = setInterval(() => {
-      setRemaining((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(id);
-  }, [onClose, remaining, visible]);
-
-  const progress = useMemo(() => {
-    if (!restSeconds || restSeconds <= 0) {
-      return 0;
-    }
-    return Math.min(1, Math.max(0, 1 - remaining / restSeconds));
-  }, [remaining, restSeconds]);
-
-  const progressWidth = `${Math.round(progress * 100)}%` as `${number}%`;
-
   return (
-    <Modal transparent visible={visible} animationType="fade">
+    <Modal animationType="fade" transparent visible={visible}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.title}>Descanso</Text>
-          <Text style={styles.time}>{formatTime(remaining)}</Text>
+          <Text style={styles.title}>DESCANSO</Text>
+          <Text style={styles.time}>{formatTime(timerSeconds)}</Text>
 
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: progressWidth }]} />
+            <View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, timerSeconds * 3))}%` }]} />
           </View>
 
-          <Text style={styles.context}>{exerciseName ?? 'Exercicio'}</Text>
+          {nextInfo ? (
+            <View style={styles.previewCard}>
+              <Text style={styles.previewTitle}>Proximo: {nextInfo.exerciseName}</Text>
+              <Text style={styles.previewSubtitle}>
+                {nextInfo.setLabel} - {nextInfo.weightLabel}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.actionsRow}>
-            <Pressable
-              onPress={() => setRemaining((prev) => prev + 15)}
-              style={styles.secondaryButton}
-            >
+            <Pressable onPress={onAdd15} style={styles.secondaryButton}>
               <Text style={styles.secondaryText}>+15s</Text>
             </Pressable>
-            <Pressable
-              onPress={() => setRemaining((prev) => Math.max(0, prev - 15))}
-              style={styles.secondaryButton}
-            >
+            <Pressable onPress={onMinus15} style={styles.secondaryButton}>
               <Text style={styles.secondaryText}>-15s</Text>
             </Pressable>
           </View>
 
-          <Pressable onPress={onClose} style={styles.skipButton}>
-            <Text style={styles.skipText}>Pular Descanso</Text>
+          <Pressable onPress={onSkip} style={styles.skipButton}>
+            <Text style={styles.skipText}>PULAR DESCANSO</Text>
           </Pressable>
         </View>
       </View>
@@ -111,7 +76,7 @@ const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     gap: SPACING.md,
-    marginTop: SPACING.lg,
+    marginTop: SPACING.md,
   },
   card: {
     backgroundColor: COLORS.surface,
@@ -119,13 +84,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
     padding: SPACING.lg,
-    width: '85%',
-  },
-  context: {
-    color: COLORS.textSecondary,
-    fontSize: FONT_SIZE.md,
-    marginTop: SPACING.md,
-    textAlign: 'center',
+    width: '88%',
   },
   overlay: {
     alignItems: 'center',
@@ -133,10 +92,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  previewCard: {
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    marginTop: SPACING.md,
+    padding: SPACING.sm,
+  },
+  previewSubtitle: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.sm,
+    marginTop: SPACING.xs,
+  },
+  previewTitle: {
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '600',
+  },
   progressFill: {
     backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.full,
-    height: 8,
+    height: '100%',
   },
   progressTrack: {
     backgroundColor: COLORS.border,
@@ -153,24 +129,24 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     flex: 1,
-    minHeight: 40,
     justifyContent: 'center',
+    minHeight: 42,
   },
   secondaryText: {
     color: COLORS.textPrimary,
     fontSize: FONT_SIZE.sm,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   skipButton: {
     alignItems: 'center',
     marginTop: SPACING.lg,
-    minHeight: 40,
+    minHeight: 42,
     justifyContent: 'center',
   },
   skipText: {
     color: COLORS.textSecondary,
     fontSize: FONT_SIZE.md,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   time: {
     color: COLORS.primary,

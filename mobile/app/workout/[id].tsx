@@ -31,6 +31,7 @@ export default function WorkoutDetailScreen() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
   const [timerVisible, setTimerVisible] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
   const startedAtRef = useRef<number>(Date.now());
 
   const loadSheet = useCallback(async () => {
@@ -52,8 +53,27 @@ export default function WorkoutDetailScreen() {
     loadSheet();
   }, [loadSheet]);
 
+  useEffect(() => {
+    if (!timerVisible || timerSeconds <= 0) {
+      return;
+    }
+
+    const id = setInterval(() => {
+      setTimerSeconds((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, [timerSeconds, timerVisible]);
+
+  useEffect(() => {
+    if (timerVisible && timerSeconds === 0) {
+      setTimerVisible(false);
+    }
+  }, [timerSeconds, timerVisible]);
+
   const openTimer = (exercise: Exercise) => {
     setActiveExercise(exercise);
+    setTimerSeconds(exercise.rest_seconds);
     setTimerVisible(true);
   };
 
@@ -143,9 +163,19 @@ export default function WorkoutDetailScreen() {
 
       <RestTimer
         visible={timerVisible}
-        restSeconds={activeExercise?.rest_seconds ?? 60}
-        exerciseName={activeExercise?.name}
-        onClose={closeTimer}
+        timerSeconds={timerSeconds}
+        onAdd15={() => setTimerSeconds((prev) => prev + 15)}
+        onMinus15={() => setTimerSeconds((prev) => Math.max(0, prev - 15))}
+        onSkip={closeTimer}
+        nextInfo={
+          activeExercise
+            ? {
+                exerciseName: activeExercise.name,
+                setLabel: 'Proxima serie',
+                weightLabel: `${activeExercise.reps} reps`,
+              }
+            : null
+        }
       />
     </View>
   );
